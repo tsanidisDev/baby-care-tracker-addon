@@ -14,6 +14,8 @@ from typing import Dict, Any, Optional
 def setup_logging(log_level: str = 'info') -> logging.Logger:
     """Setup logging configuration"""
     
+    print(f"Setting up logging with level: {log_level}")
+    
     # Convert string log level to logging constant
     level_map = {
         'trace': logging.DEBUG,
@@ -26,33 +28,45 @@ def setup_logging(log_level: str = 'info') -> logging.Logger:
     }
     
     level = level_map.get(log_level.lower(), logging.INFO)
+    print(f"Mapped log level {log_level} to {level}")
     
     # Create logs directory
-    os.makedirs('/data/logs', exist_ok=True)
+    try:
+        os.makedirs('/data/logs', exist_ok=True)
+        print("Created /data/logs directory")
+    except Exception as e:
+        print(f"Error creating logs directory: {e}")
     
     # Configure logging
-    logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(),  # Console output
-            logging.FileHandler('/data/logs/baby_care_tracker.log', mode='a')  # File output
-        ]
-    )
+    try:
+        logging.basicConfig(
+            level=level,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.StreamHandler(),  # Console output
+                logging.FileHandler('/data/logs/baby_care_tracker.log', mode='a')  # File output
+            ]
+        )
+        print("Logging configuration completed")
+    except Exception as e:
+        print(f"Error configuring logging: {e}")
     
     # Set specific log levels for noisy libraries
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     logging.getLogger('requests').setLevel(logging.WARNING)
     logging.getLogger('paho').setLevel(logging.WARNING)
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
     
     logger = logging.getLogger('baby_care_tracker')
     logger.info(f"Logging initialized at level: {log_level}")
+    print(f"Logger created: {logger}")
     
     return logger
 
 def load_config() -> Dict[str, Any]:
     """Load configuration from environment variables and options"""
     
+    print("Loading configuration...")
     config = {}
     
     # Load from environment variables (set by run.sh)
@@ -67,22 +81,29 @@ def load_config() -> Dict[str, Any]:
         'TIMEZONE': 'timezone'
     }
     
+    print("Environment variables found:")
     for env_var, config_key in env_mappings.items():
         value = os.getenv(env_var)
         if value:
+            print(f"  {env_var}={value}")
             # Convert boolean strings
             if value.lower() in ['true', 'false']:
                 value = value.lower() == 'true'
             config[config_key] = value
+        else:
+            print(f"  {env_var}=<not set>")
     
     # Load from add-on options file if available
     try:
+        print("Attempting to load /data/options.json...")
         with open('/data/options.json', 'r') as f:
             addon_options = json.load(f)
+            print(f"Add-on options loaded: {addon_options}")
             config.update(addon_options)
     except FileNotFoundError:
-        pass  # Not running as add-on
+        print("No /data/options.json found (not running as add-on)")
     except Exception as e:
+        print(f"Could not load add-on options: {e}")
         logging.warning(f"Could not load add-on options: {e}")
     
     # Set defaults
@@ -102,10 +123,15 @@ def load_config() -> Dict[str, Any]:
         'daily_reports': False
     }
     
+    print("Applying defaults...")
     for key, default_value in defaults.items():
         if key not in config:
             config[key] = default_value
+            print(f"  {key}={default_value} (default)")
+        else:
+            print(f"  {key}={config[key]} (configured)")
     
+    print(f"Final configuration: {config}")
     return config
 
 def validate_config(config: Dict[str, Any]) -> bool:

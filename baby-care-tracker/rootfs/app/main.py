@@ -11,27 +11,60 @@ import threading
 import time
 from datetime import datetime
 
-from flask import Flask, render_template, request, jsonify, send_file
-from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+print("=== Baby Care Tracker Python Application Starting ===")
+print(f"Python version: {sys.version}")
+print(f"Current working directory: {os.getcwd()}")
+print(f"Python path: {sys.path}")
+print(f"Environment variables:")
+for key, value in os.environ.items():
+    if 'MQTT' in key or 'DATABASE' in key or 'LOG' in key:
+        print(f"  {key}={value}")
 
-from database import Database
-from mqtt_client import MQTTClient
-from analytics import Analytics
-from device_manager import DeviceManager
-from utils import setup_logging, load_config
+try:
+    print("Importing Flask modules...")
+    from flask import Flask, render_template, request, jsonify, send_file
+    from flask_cors import CORS
+    from flask_socketio import SocketIO, emit
+    print("Flask modules imported successfully")
+except ImportError as e:
+    print(f"ERROR importing Flask modules: {e}")
+    sys.exit(1)
+
+try:
+    print("Importing application modules...")
+    from database import Database
+    from mqtt_client import MQTTClient
+    from analytics import Analytics
+    from device_manager import DeviceManager
+    from utils import setup_logging, load_config
+    print("Application modules imported successfully")
+except ImportError as e:
+    print(f"ERROR importing application modules: {e}")
+    print("Checking if modules exist...")
+    import glob
+    py_files = glob.glob("*.py")
+    print(f"Python files in current directory: {py_files}")
+    sys.exit(1)
 
 # Configuration
+print("Loading configuration...")
 CONFIG = load_config()
+print(f"Configuration loaded: {CONFIG}")
+
+print("Setting up logging...")
 logger = setup_logging(CONFIG.get('log_level', 'info'))
+logger.info("=== Baby Care Tracker Application Starting ===")
+logger.info(f"Configuration: {CONFIG}")
 
 # Initialize Flask app
+print("Initializing Flask application...")
 app = Flask(__name__, 
            template_folder='templates',
            static_folder='static')
 app.config['SECRET_KEY'] = 'baby-care-tracker-secret-key'
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+print("Flask application initialized")
 
 # Global components
 db = None
@@ -46,7 +79,10 @@ def initialize_components():
     try:
         # Initialize database
         logger.info("Initializing database...")
+        print("Initializing database...")
         db = Database(CONFIG)
+        logger.info("Database initialized successfully")
+        print("Database initialized successfully")
         
         # Initialize MQTT client
         logger.info("Initializing MQTT client...")
@@ -355,22 +391,46 @@ def background_tasks():
 
 def main():
     """Main application entry point"""
+    print("=== Main function starting ===")
     logger.info("Starting Baby Care Tracker Add-on v2.0.0")
+    print("Starting Baby Care Tracker Add-on v2.0.0")
     
-    # Initialize all components
-    initialize_components()
-    
-    # Start background tasks thread
-    background_thread = threading.Thread(target=background_tasks, daemon=True)
-    background_thread.start()
-    
-    # Start the web server
-    logger.info("Starting web server on port 8099...")
-    socketio.run(app, 
-                host='0.0.0.0', 
-                port=8099, 
-                debug=CONFIG.get('debug', False),
-                allow_unsafe_werkzeug=True)
+    try:
+        # Initialize all components
+        print("Initializing components...")
+        logger.info("Initializing components...")
+        initialize_components()
+        print("Components initialized successfully")
+        logger.info("Components initialized successfully")
+        
+        # Start background tasks thread
+        print("Starting background tasks thread...")
+        logger.info("Starting background tasks thread...")
+        background_thread = threading.Thread(target=background_tasks, daemon=True)
+        background_thread.start()
+        print("Background tasks thread started")
+        logger.info("Background tasks thread started")
+        
+        # Start the web server
+        print("Starting web server on port 8099...")
+        logger.info("Starting web server on port 8099...")
+        print(f"Debug mode: {CONFIG.get('debug', False)}")
+        print("Web server is about to start...")
+        
+        socketio.run(app, 
+                    host='0.0.0.0', 
+                    port=8099, 
+                    debug=CONFIG.get('debug', False),
+                    allow_unsafe_werkzeug=True)
+                    
+    except Exception as e:
+        print(f"CRITICAL ERROR in main(): {e}")
+        logger.error(f"CRITICAL ERROR in main(): {e}")
+        import traceback
+        traceback.print_exc()
+        print("Application failed to start")
+        sys.exit(1)
 
 if __name__ == '__main__':
+    print("=== __main__ block executing ===")
     main()
