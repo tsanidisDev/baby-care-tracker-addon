@@ -75,13 +75,19 @@ echo "Current directory: $(pwd)"
 
 if [ -f requirements.txt ]; then
     echo "Installing requirements..."
-    pip3 install -r requirements.txt || {
-        echo "ERROR: Failed to install requirements"
-        echo "Attempting alternative installation..."
-        cat requirements.txt | while read requirement; do
-            echo "Installing: $requirement"
-            pip3 install "$requirement" || echo "Failed to install: $requirement"
-        done
+    pip3 install --no-cache-dir --break-system-packages -r requirements.txt || {
+        echo "ERROR: Failed to install requirements with --break-system-packages"
+        echo "Attempting installation without flag..."
+        pip3 install --no-cache-dir -r requirements.txt || {
+            echo "ERROR: Failed to install requirements"
+            echo "Attempting alternative installation..."
+            cat requirements.txt | while read requirement; do
+                if [ ! -z "$requirement" ] && [ "${requirement:0:1}" != "#" ]; then
+                    echo "Installing: $requirement"
+                    pip3 install --no-cache-dir --break-system-packages "$requirement" || echo "Failed to install: $requirement"
+                fi
+            done
+        }
     }
 else
     echo "ERROR: requirements.txt not found in /app"

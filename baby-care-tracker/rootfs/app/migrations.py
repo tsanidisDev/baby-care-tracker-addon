@@ -25,6 +25,7 @@ class MigrationManager:
             '1.0.1': self._migrate_to_101,
             '1.0.2': self._migrate_to_102,
             '1.0.3': self._migrate_to_103,
+            '1.0.4': self._migrate_to_104,
         }
     
     def get_current_version(self) -> str:
@@ -173,6 +174,12 @@ class MigrationManager:
         except Exception as e:
             logger.warning(f"Could not add indexes: {e}")
             # Non-critical, continue anyway
+    
+    def _migrate_to_104(self):
+        """Migration to version 1.0.4"""
+        # Add any schema changes for 1.0.4
+        logger.info("No schema changes for 1.0.4 - compatibility improvements only")
+        pass
 
 
 def run_migrations(db_path: str, target_version: str):

@@ -53,7 +53,7 @@ CONFIG = load_config()
 print(f"Configuration loaded: {CONFIG}")
 
 # Application version
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 print(f"Baby Care Tracker Add-on version: {APP_VERSION}")
 
 print("Setting up logging...")
@@ -69,7 +69,7 @@ app = Flask(__name__,
            static_folder='static')
 app.config['SECRET_KEY'] = 'baby-care-tracker-secret-key'
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 print("Flask application initialized")
 
 # Global components
@@ -461,11 +461,14 @@ def main():
         print(f"Debug mode: {CONFIG.get('debug', False)}")
         print("Web server is about to start...")
         
+        # Use gevent for better async performance
+        from gevent import monkey
+        monkey.patch_all()
+        
         socketio.run(app, 
                     host='0.0.0.0', 
                     port=8099, 
-                    debug=CONFIG.get('debug', False),
-                    allow_unsafe_werkzeug=True)
+                    debug=CONFIG.get('debug', False))
                     
     except Exception as e:
         print(f"CRITICAL ERROR in main(): {e}")

@@ -42,8 +42,7 @@ RUN echo "=== Installing pandas with compatible numpy ===" && \
 RUN echo "=== Installing remaining Python packages ===" && \
     pip3 --version && \
     python3 --version && \
-    (pip3 install --no-cache-dir --break-system-packages -r requirements.txt || \
-     pip3 install --no-cache-dir -r requirements.txt) && \
+    pip3 install --no-cache-dir --break-system-packages -r requirements.txt && \
     echo "=== Python packages installed successfully ==="
 
 # Verify numpy and pandas compatibility
@@ -88,6 +87,6 @@ LABEL \
     io.hass.description="Complete baby care tracking solution" \
     io.hass.arch="aarch64|amd64|armhf|armv7|i386" \
     io.hass.type="addon" \
-    io.hass.version="1.0.3"
+    io.hass.version="1.0.4"
 
 CMD ["/run.sh"]

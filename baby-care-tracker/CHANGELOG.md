@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-09-04
+
+### Fixed
+- Python package installation in Alpine Linux environment
+- SSL compatibility issue with Python 3.12 by replacing eventlet with gevent
+- pip installation process with proper --break-system-packages flag handling
+- SocketIO async mode configuration for better performance
+
+### Changed
+- Replaced eventlet with gevent for better Python 3.12 compatibility
+- Enhanced pip installation with fallback mechanisms
+- Improved error handling in package installation process
+
 ## [1.0.3] - 2025-09-04
 
 ### Added
