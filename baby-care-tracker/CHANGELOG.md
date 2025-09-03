@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2025-09-04
+
+### Fixed
+- Dashboard analytics cards showing 0 values on page refresh
+- Missing updateDashboard() function causing JavaScript errors
+- Template variable errors on settings and devices pages
+- Analytics cards not loading fresh data when dashboard is refreshed
+
+### Added
+- New /api/daily-stats endpoint for real-time statistics refresh
+- Automatic dashboard statistics loading on page initialization
+- updateDashboard() and refreshDashboardStats() JavaScript functions
+- Real-time stats updates when new events are received via WebSocket
+- Enhanced error handling for analytics data fetching
+
+### Changed
+- Dashboard now fetches fresh statistics from server on every page load
+- Improved WebSocket event handling for real-time dashboard updates
+- Enhanced JavaScript error handling and logging
+
 ## [1.0.4] - 2025-09-04
 
 ### Fixed
