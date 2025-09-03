@@ -1,0 +1,624 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Baby Care Tracker{% endblock %}
+
+{% block content %}
+<!-- General Settings -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>General Settings</h5>
+            </div>
+            <div class="card-body">
+                <form id="generalSettingsForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="babyName" class="form-label">Baby Name</label>
+                            <input type="text" class="form-control" id="babyName" 
+                                   value="{{ settings.baby_name or '' }}" placeholder="Enter baby's name">
+                            <small class="form-text text-muted">Used for personalized messages and reports</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="birthDate" class="form-label">Birth Date</label>
+                            <input type="date" class="form-control" id="birthDate" 
+                                   value="{{ settings.birth_date or '' }}">
+                            <small class="form-text text-muted">Used for age calculations and milestones</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="timezone" class="form-label">Timezone</label>
+                            <select class="form-select" id="timezone">
+                                <option value="UTC" {{ 'selected' if settings.timezone == 'UTC' }}>UTC</option>
+                                <option value="America/New_York" {{ 'selected' if settings.timezone == 'America/New_York' }}>Eastern Time</option>
+                                <option value="America/Chicago" {{ 'selected' if settings.timezone == 'America/Chicago' }}>Central Time</option>
+                                <option value="America/Denver" {{ 'selected' if settings.timezone == 'America/Denver' }}>Mountain Time</option>
+                                <option value="America/Los_Angeles" {{ 'selected' if settings.timezone == 'America/Los_Angeles' }}>Pacific Time</option>
+                                <option value="Europe/London" {{ 'selected' if settings.timezone == 'Europe/London' }}>London</option>
+                                <option value="Europe/Paris" {{ 'selected' if settings.timezone == 'Europe/Paris' }}>Paris</option>
+                                <option value="Europe/Berlin" {{ 'selected' if settings.timezone == 'Europe/Berlin' }}>Berlin</option>
+                                <option value="Asia/Tokyo" {{ 'selected' if settings.timezone == 'Asia/Tokyo' }}>Tokyo</option>
+                                <option value="Australia/Sydney" {{ 'selected' if settings.timezone == 'Australia/Sydney' }}>Sydney</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="language" class="form-label">Language</label>
+                            <select class="form-select" id="language">
+                                <option value="en" {{ 'selected' if settings.language == 'en' }}>English</option>
+                                <option value="es" {{ 'selected' if settings.language == 'es' }}>Español</option>
+                                <option value="fr" {{ 'selected' if settings.language == 'fr' }}>Français</option>
+                                <option value="de" {{ 'selected' if settings.language == 'de' }}>Deutsch</option>
+                                <option value="it" {{ 'selected' if settings.language == 'it' }}>Italiano</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="theme" class="form-label">Theme</label>
+                            <select class="form-select" id="theme">
+                                <option value="light" {{ 'selected' if settings.theme == 'light' }}>Light</option>
+                                <option value="dark" {{ 'selected' if settings.theme == 'dark' }}>Dark</option>
+                                <option value="auto" {{ 'selected' if settings.theme == 'auto' }}>Auto (System)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="autoRefresh" class="form-label">Auto Refresh Interval</label>
+                            <select class="form-select" id="autoRefresh">
+                                <option value="0" {{ 'selected' if settings.auto_refresh == 0 }}>Disabled</option>
+                                <option value="30" {{ 'selected' if settings.auto_refresh == 30 }}>30 seconds</option>
+                                <option value="60" {{ 'selected' if settings.auto_refresh == 60 }}>1 minute</option>
+                                <option value="300" {{ 'selected' if settings.auto_refresh == 300 }}>5 minutes</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save General Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Settings -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notification Settings</h5>
+            </div>
+            <div class="card-body">
+                <form id="notificationSettingsForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enableNotifications" 
+                                       {{ 'checked' if settings.notifications_enabled }}>
+                                <label class="form-check-label" for="enableNotifications">
+                                    Enable Notifications
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Receive notifications for feeding reminders and other events</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="soundNotifications" 
+                                       {{ 'checked' if settings.sound_notifications }}>
+                                <label class="form-check-label" for="soundNotifications">
+                                    Sound Notifications
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Play sounds for notifications</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="feedingReminder" class="form-label">Feeding Reminder (hours)</label>
+                            <input type="number" class="form-control" id="feedingReminder" 
+                                   value="{{ settings.feeding_reminder_hours or 3 }}" min="1" max="8" step="0.5">
+                            <small class="form-text text-muted">Remind if no feeding recorded for this many hours</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="diaperReminder" class="form-label">Diaper Reminder (hours)</label>
+                            <input type="number" class="form-control" id="diaperReminder" 
+                                   value="{{ settings.diaper_reminder_hours or 4 }}" min="1" max="8" step="0.5">
+                            <small class="form-text text-muted">Remind if no diaper change recorded for this many hours</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quietHours" class="form-label">Quiet Hours</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">From</span>
+                                    <input type="time" class="form-control" id="quietHoursStart" 
+                                           value="{{ settings.quiet_hours_start or '22:00' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">To</span>
+                                    <input type="time" class="form-control" id="quietHoursEnd" 
+                                           value="{{ settings.quiet_hours_end or '06:00' }}">
+                                </div>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">No notifications will be sent during these hours</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Notification Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Database Settings -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Database Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6>Database Information</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Type:</strong></td>
+                                <td>{{ database_info.type }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Location:</strong></td>
+                                <td><code>{{ database_info.location }}</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Events:</strong></td>
+                                <td>{{ database_info.total_events }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Database Size:</strong></td>
+                                <td>{{ database_info.size_mb }} MB</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Last Backup:</strong></td>
+                                <td>{{ database_info.last_backup or 'Never' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6>Database Actions</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-info" onclick="createBackup()">
+                                <i class="fas fa-download me-2"></i>Create Backup
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="showImportModal()">
+                                <i class="fas fa-upload me-2"></i>Import Data
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="optimizeDatabase()">
+                                <i class="fas fa-compress me-2"></i>Optimize Database
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="confirmDatabaseReset()">
+                                <i class="fas fa-trash me-2"></i>Reset Database
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Automatic Backup</h6>
+                        <form id="backupSettingsForm">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="autoBackup" 
+                                               {{ 'checked' if settings.auto_backup_enabled }}>
+                                        <label class="form-check-label" for="autoBackup">
+                                            Enable Automatic Backup
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="backupInterval" class="form-label">Backup Interval</label>
+                                    <select class="form-select" id="backupInterval">
+                                        <option value="daily" {{ 'selected' if settings.backup_interval == 'daily' }}>Daily</option>
+                                        <option value="weekly" {{ 'selected' if settings.backup_interval == 'weekly' }}>Weekly</option>
+                                        <option value="monthly" {{ 'selected' if settings.backup_interval == 'monthly' }}>Monthly</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="backupRetention" class="form-label">Keep Backups (days)</label>
+                                    <input type="number" class="form-control" id="backupRetention" 
+                                           value="{{ settings.backup_retention_days or 30 }}" min="1" max="365">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Backup Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Integration Settings -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plug me-2"></i>Integration Settings</h5>
+            </div>
+            <div class="card-body">
+                <form id="integrationSettingsForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="haUrl" class="form-label">Home Assistant URL</label>
+                            <input type="url" class="form-control" id="haUrl" 
+                                   value="{{ settings.homeassistant_url or 'http://homeassistant.local:8123' }}" 
+                                   placeholder="http://homeassistant.local:8123">
+                            <small class="form-text text-muted">URL to your Home Assistant instance</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="haToken" class="form-label">Home Assistant Token</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="haToken" 
+                                       placeholder="Enter long-lived access token">
+                                <button class="btn btn-outline-secondary" type="button" onclick="toggleTokenVisibility()">
+                                    <i class="fas fa-eye" id="tokenToggleIcon"></i>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Long-lived access token for API access</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="publishToHa" 
+                                       {{ 'checked' if settings.publish_to_homeassistant }}>
+                                <label class="form-check-label" for="publishToHa">
+                                    Publish Events to Home Assistant
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Create sensors and events in Home Assistant</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="createEntities" 
+                                       {{ 'checked' if settings.create_ha_entities }}>
+                                <label class="form-check-label" for="createEntities">
+                                    Create Home Assistant Entities
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Auto-create sensors for feeding, sleep, and diaper stats</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-info" onclick="testHaConnection()">
+                            <i class="fas fa-plug me-2"></i>Test Home Assistant Connection
+                        </button>
+                        <span id="haConnectionStatus" class="ms-3"></span>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Integration Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Data Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="importForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="importFile" class="form-label">Select File</label>
+                        <input type="file" class="form-control" id="importFile" 
+                               accept=".csv,.json,.db" required>
+                        <small class="form-text text-muted">
+                            Supported formats: CSV, JSON, or SQLite database backup
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="importMode" 
+                                   id="importModeAppend" value="append" checked>
+                            <label class="form-check-label" for="importModeAppend">
+                                Append to existing data
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="importMode" 
+                                   id="importModeReplace" value="replace">
+                            <label class="form-check-label" for="importModeReplace">
+                                Replace existing data (WARNING: This will delete all current data)
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="importData()">Import Data</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let importModal = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        importModal = new bootstrap.Modal(document.getElementById('importModal'));
+        
+        // Apply saved theme
+        applyTheme('{{ settings.theme or "light" }}');
+    });
+    
+    // General Settings Form
+    document.getElementById('generalSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const settings = {
+            baby_name: document.getElementById('babyName').value,
+            birth_date: document.getElementById('birthDate').value,
+            timezone: document.getElementById('timezone').value,
+            language: document.getElementById('language').value,
+            theme: document.getElementById('theme').value,
+            auto_refresh: parseInt(document.getElementById('autoRefresh').value)
+        };
+        
+        saveSettings('general', settings);
+    });
+    
+    // Notification Settings Form
+    document.getElementById('notificationSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const settings = {
+            notifications_enabled: document.getElementById('enableNotifications').checked,
+            sound_notifications: document.getElementById('soundNotifications').checked,
+            feeding_reminder_hours: parseFloat(document.getElementById('feedingReminder').value),
+            diaper_reminder_hours: parseFloat(document.getElementById('diaperReminder').value),
+            quiet_hours_start: document.getElementById('quietHoursStart').value,
+            quiet_hours_end: document.getElementById('quietHoursEnd').value
+        };
+        
+        saveSettings('notifications', settings);
+    });
+    
+    // Backup Settings Form
+    document.getElementById('backupSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const settings = {
+            auto_backup_enabled: document.getElementById('autoBackup').checked,
+            backup_interval: document.getElementById('backupInterval').value,
+            backup_retention_days: parseInt(document.getElementById('backupRetention').value)
+        };
+        
+        saveSettings('backup', settings);
+    });
+    
+    // Integration Settings Form
+    document.getElementById('integrationSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const settings = {
+            homeassistant_url: document.getElementById('haUrl').value,
+            homeassistant_token: document.getElementById('haToken').value,
+            publish_to_homeassistant: document.getElementById('publishToHa').checked,
+            create_ha_entities: document.getElementById('createEntities').checked
+        };
+        
+        saveSettings('integration', settings);
+    });
+    
+    function saveSettings(category, settings) {
+        fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category, settings })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`${category.charAt(0).toUpperCase() + category.slice(1)} settings saved`, 'success');
+                
+                // Apply theme immediately if changed
+                if (category === 'general' && settings.theme) {
+                    applyTheme(settings.theme);
+                }
+            } else {
+                showToast('Error saving settings: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error saving settings: ' + error.message, 'danger');
+        });
+    }
+    
+    function applyTheme(theme) {
+        const html = document.documentElement;
+        
+        if (theme === 'dark') {
+            html.setAttribute('data-bs-theme', 'dark');
+        } else if (theme === 'auto') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            html.setAttribute('data-bs-theme', prefersDark ? 'dark' : 'light');
+        } else {
+            html.setAttribute('data-bs-theme', 'light');
+        }
+    }
+    
+    function toggleTokenVisibility() {
+        const tokenInput = document.getElementById('haToken');
+        const toggleIcon = document.getElementById('tokenToggleIcon');
+        
+        if (tokenInput.type === 'password') {
+            tokenInput.type = 'text';
+            toggleIcon.className = 'fas fa-eye-slash';
+        } else {
+            tokenInput.type = 'password';
+            toggleIcon.className = 'fas fa-eye';
+        }
+    }
+    
+    function testHaConnection() {
+        const url = document.getElementById('haUrl').value;
+        const token = document.getElementById('haToken').value;
+        
+        if (!url || !token) {
+            showToast('Please enter both URL and token', 'warning');
+            return;
+        }
+        
+        const statusSpan = document.getElementById('haConnectionStatus');
+        statusSpan.innerHTML = '<span class="badge bg-warning">Testing...</span>';
+        
+        fetch('/api/homeassistant/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, token })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                statusSpan.innerHTML = '<span class="badge bg-success">Connected</span>';
+                showToast('Home Assistant connection successful', 'success');
+            } else {
+                statusSpan.innerHTML = '<span class="badge bg-danger">Failed</span>';
+                showToast('Connection failed: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            statusSpan.innerHTML = '<span class="badge bg-danger">Error</span>';
+            showToast('Connection error: ' + error.message, 'danger');
+        });
+    }
+    
+    function createBackup() {
+        fetch('/api/database/backup', { method: 'POST' })
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `baby_care_backup_${new Date().toISOString().split('T')[0]}.db`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showToast('Database backup created', 'success');
+        })
+        .catch(error => {
+            showToast('Error creating backup: ' + error.message, 'danger');
+        });
+    }
+    
+    function showImportModal() {
+        importModal.show();
+    }
+    
+    function importData() {
+        const fileInput = document.getElementById('importFile');
+        const mode = document.querySelector('input[name="importMode"]:checked').value;
+        
+        if (!fileInput.files[0]) {
+            showToast('Please select a file to import', 'warning');
+            return;
+        }
+        
+        if (mode === 'replace' && !confirm('This will DELETE ALL existing data. Are you sure?')) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('mode', mode);
+        
+        fetch('/api/database/import', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Data imported successfully. ${data.records_imported} records imported.`, 'success');
+                importModal.hide();
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                showToast('Error importing data: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error importing data: ' + error.message, 'danger');
+        });
+    }
+    
+    function optimizeDatabase() {
+        fetch('/api/database/optimize', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Database optimized successfully', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast('Error optimizing database: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error optimizing database: ' + error.message, 'danger');
+        });
+    }
+    
+    function confirmDatabaseReset() {
+        if (confirm('This will DELETE ALL baby care data. This action cannot be undone. Are you absolutely sure?')) {
+            if (confirm('Last chance! This will permanently delete all feeding, sleep, and diaper data. Continue?')) {
+                resetDatabase();
+            }
+        }
+    }
+    
+    function resetDatabase() {
+        fetch('/api/database/reset', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Database reset successfully', 'success');
+                setTimeout(() => window.location.href = '/', 2000);
+            } else {
+                showToast('Error resetting database: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error resetting database: ' + error.message, 'danger');
+        });
+    }
+</script>
+{% endblock %}

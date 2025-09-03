@@ -1,0 +1,412 @@
+/* Baby Care Tracker Custom Styles */
+
+:root {
+    --bs-primary: #0d6efd;
+    --bs-secondary: #6c757d;
+    --bs-success: #198754;
+    --bs-danger: #dc3545;
+    --bs-warning: #ffc107;
+    --bs-info: #0dcaf0;
+    
+    /* Custom colors for baby care */
+    --feeding-left: #e91e63;
+    --feeding-right: #9c27b0;
+    --sleep-indicator: #ff9800;
+    --diaper-indicator: #4caf50;
+    --baby-primary: #ff6b9d;
+    --baby-secondary: #74b9ff;
+}
+
+/* Dark theme adjustments */
+[data-bs-theme="dark"] {
+    --feeding-left: #f06292;
+    --feeding-right: #ba68c8;
+    --sleep-indicator: #ffb74d;
+    --diaper-indicator: #81c784;
+    --baby-primary: #ff8cc8;
+    --baby-secondary: #94d3ff;
+}
+
+/* Custom color classes */
+.feeding-left { color: var(--feeding-left) !important; }
+.feeding-right { color: var(--feeding-right) !important; }
+.sleep-indicator { color: var(--sleep-indicator) !important; }
+.diaper-indicator { color: var(--diaper-indicator) !important; }
+.text-baby-primary { color: var(--baby-primary) !important; }
+.text-baby-secondary { color: var(--baby-secondary) !important; }
+
+.bg-feeding-left { background-color: var(--feeding-left) !important; }
+.bg-feeding-right { background-color: var(--feeding-right) !important; }
+.bg-sleep-indicator { background-color: var(--sleep-indicator) !important; }
+.bg-diaper-indicator { background-color: var(--diaper-indicator) !important; }
+
+/* Header styles */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.navbar-brand i {
+    color: var(--baby-primary);
+    margin-right: 0.5rem;
+}
+
+/* Card enhancements */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background: linear-gradient(45deg, var(--baby-primary), var(--baby-secondary));
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 500;
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+}
+
+/* Stat cards */
+.stat-card {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.stat-card:hover {
+    transform: scale(1.05);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Button enhancements */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, var(--baby-primary), var(--baby-secondary));
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #ff4757, #5352ed);
+    border: none;
+}
+
+/* Quick action buttons */
+.btn-group .btn {
+    border-radius: 8px;
+    margin: 0 2px;
+}
+
+/* Timeline styles */
+.timeline-item {
+    padding: 1rem;
+    border-left: 3px solid var(--baby-primary);
+    margin-left: 1rem;
+    margin-bottom: 1rem;
+    background: rgba(255, 107, 157, 0.05);
+    border-radius: 0 8px 8px 0;
+    transition: all 0.3s ease;
+}
+
+.timeline-item:hover {
+    background: rgba(255, 107, 157, 0.1);
+    transform: translateX(5px);
+}
+
+[data-bs-theme="dark"] .timeline-item {
+    background: rgba(255, 140, 200, 0.1);
+}
+
+[data-bs-theme="dark"] .timeline-item:hover {
+    background: rgba(255, 140, 200, 0.15);
+}
+
+/* Form enhancements */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--baby-primary);
+    box-shadow: 0 0 0 0.2rem rgba(255, 107, 157, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: var(--baby-primary);
+    border-color: var(--baby-primary);
+}
+
+/* Toast notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+}
+
+.toast {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Badge enhancements */
+.badge {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+}
+
+/* Table enhancements */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: linear-gradient(45deg, var(--baby-primary), var(--baby-secondary));
+    color: white;
+    border: none;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(255, 107, 157, 0.05);
+}
+
+[data-bs-theme="dark"] .table tbody tr:hover {
+    background-color: rgba(255, 140, 200, 0.1);
+}
+
+/* Modal enhancements */
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    background: linear-gradient(45deg, var(--baby-primary), var(--baby-secondary));
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .timeline-item {
+        margin-left: 0.5rem;
+        padding: 0.75rem;
+    }
+    
+    .btn-group .btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar-brand {
+        font-size: 1.25rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.75rem;
+    }
+    
+    .btn {
+        font-size: 0.875rem;
+    }
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+/* Error page styles */
+.error-page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Device status indicators */
+.device-status-online {
+    color: #28a745;
+}
+
+.device-status-offline {
+    color: #dc3545;
+}
+
+.device-status-unknown {
+    color: #6c757d;
+}
+
+/* MQTT status indicator */
+.mqtt-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mqtt-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--baby-primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ff4757;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-track {
+    background: #2c3e50;
+}
+
+/* Utility classes */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.border-baby-primary {
+    border-color: var(--baby-primary) !important;
+}
+
+.text-nowrap {
+    white-space: nowrap;
+}
+
+/* Print styles */
+@media print {
+    .navbar,
+    .btn,
+    .card-header,
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+}

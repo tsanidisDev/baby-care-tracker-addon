@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Baby Care Tracker{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Date Range Filter -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter & Export</h5>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" name="start_date" 
+                               value="{{ start_date or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" name="end_date" 
+                               value="{{ end_date or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="eventType" class="form-label">Event Type</label>
+                        <select class="form-select" id="eventType" name="event_type">
+                            <option value="">All Events</option>
+                            <option value="feeding" {{ 'selected' if event_type == 'feeding' }}>Feeding</option>
+                            <option value="sleep" {{ 'selected' if event_type == 'sleep' }}>Sleep</option>
+                            <option value="diaper" {{ 'selected' if event_type == 'diaper' }}>Diaper Changes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-1"></i>Filter
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="exportData('csv')">
+                                    <i class="fas fa-file-csv me-2"></i>CSV
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportData('json')">
+                                    <i class="fas fa-file-code me-2"></i>JSON
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportData('pdf')">
+                                    <i class="fas fa-file-pdf me-2"></i>PDF Report
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ analytics.total_events }}</h3>
+                <p class="mb-0">Total Events</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="feeding-left">{{ analytics.feeding_stats.total_sessions }}</h3>
+                <p class="mb-0">Feeding Sessions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="sleep-indicator">{{ "%.1f"|format(analytics.sleep_stats.avg_duration_hours) }}h</h3>
+                <p class="mb-0">Avg Sleep</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="diaper-indicator">{{ analytics.diaper_stats.total_changes }}</h3>
+                <p class="mb-0">Diaper Changes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ "%.1f"|format(analytics.feeding_stats.avg_duration_minutes) }}m</h3>
+                <p class="mb-0">Avg Feeding</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-info">{{ analytics.days_with_data }}</h3>
+                <p class="mb-0">Days Tracked</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Daily Events</h5>
+            </div>
+            <div class="card-body">
+                <div id="dailyEventsChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Event Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div id="eventDistributionChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feeding Analysis -->
+{% if analytics.feeding_stats.total_sessions > 0 %}
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-baby-bottle me-2"></i>Feeding Patterns</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h4 class="feeding-left">{{ analytics.feeding_stats.left_breast_sessions }}</h4>
+                            <p class="mb-0">Left Breast</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h4 class="feeding-right">{{ analytics.feeding_stats.right_breast_sessions }}</h4>
+                            <p class="mb-0">Right Breast</p>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <strong>{{ "%.1f"|format(analytics.feeding_stats.avg_duration_minutes) }}min</strong>
+                        <br><small class="text-muted">Avg Duration</small>
+                    </div>
+                    <div class="col-4">
+                        <strong>{{ "%.1f"|format(analytics.feeding_stats.avg_interval_hours) }}h</strong>
+                        <br><small class="text-muted">Avg Interval</small>
+                    </div>
+                    <div class="col-4">
+                        <strong>{{ "%.1f"|format(analytics.feeding_stats.sessions_per_day) }}</strong>
+                        <br><small class="text-muted">Per Day</small>
+                    </div>
+                </div>
+                <div id="feedingPatternChart" style="height: 200px; margin-top: 15px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-moon me-2"></i>Sleep Analysis</h5>
+            </div>
+            <div class="card-body">
+                {% if analytics.sleep_stats.total_sessions > 0 %}
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <h4 class="sleep-indicator">{{ analytics.sleep_stats.total_sessions }}</h4>
+                        <p class="mb-0">Sleep Sessions</p>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-primary">{{ "%.1f"|format(analytics.sleep_stats.avg_duration_hours) }}h</h4>
+                        <p class="mb-0">Avg Duration</p>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-success">{{ "%.1f"|format(analytics.sleep_stats.total_sleep_hours) }}h</h4>
+                        <p class="mb-0">Total Sleep</p>
+                    </div>
+                </div>
+                <div id="sleepPatternChart" style="height: 200px;"></div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-moon fa-2x mb-2"></i>
+                    <p>No sleep data available for the selected period</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Events Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Detailed Events</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-light me-2" onclick="refreshAnalytics()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <span class="badge bg-secondary">{{ analytics.total_events }} events</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Timestamp</th>
+                                <th>Duration</th>
+                                <th>Notes</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody">
+                            {% if events %}
+                                {% for event in events %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-{{ 
+                                            'primary' if 'feeding' in event.event_type 
+                                            else 'warning' if 'sleep' in event.event_type
+                                            else 'success' if 'diaper' in event.event_type
+                                            else 'secondary' }}">
+                                            {{ event.event_type.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ event.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if event.duration %}
+                                            {{ event.duration }}min
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ event.notes or '-' }}</td>
+                                    <td>
+                                        {% if event.device_source %}
+                                            <small class="text-info">
+                                                <i class="fas fa-microchip me-1"></i>{{ event.device_source }}
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">Manual</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No events found for the selected criteria
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if events and events|length >= 50 %}
+                <div class="text-center mt-3">
+                    <p class="text-muted">Showing first 50 events. Use filters to narrow down results.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Chart data from backend
+    const chartData = {{ chart_data|tojsonfilter|safe }};
+    
+    // Initialize charts when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCharts();
+    });
+    
+    function initializeCharts() {
+        // Daily Events Chart
+        if (chartData.daily_events) {
+            const dailyData = [{
+                x: chartData.daily_events.dates,
+                y: chartData.daily_events.counts,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#0d6efd' },
+                marker: { color: '#0d6efd' }
+            }];
+            
+            Plotly.newPlot('dailyEventsChart', dailyData, {
+                title: '',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Events' },
+                margin: { t: 20, b: 40, l: 40, r: 20 }
+            }, { responsive: true });
+        }
+        
+        // Event Distribution Chart
+        if (chartData.event_distribution) {
+            const distributionData = [{
+                values: chartData.event_distribution.values,
+                labels: chartData.event_distribution.labels,
+                type: 'pie',
+                hole: 0.3,
+                marker: {
+                    colors: ['#0d6efd', '#ffc107', '#198754', '#dc3545', '#6f42c1']
+                }
+            }];
+            
+            Plotly.newPlot('eventDistributionChart', distributionData, {
+                title: '',
+                margin: { t: 20, b: 20, l: 20, r: 20 }
+            }, { responsive: true });
+        }
+        
+        // Feeding Pattern Chart
+        if (chartData.feeding_pattern && document.getElementById('feedingPatternChart')) {
+            const feedingData = [{
+                x: chartData.feeding_pattern.hours,
+                y: chartData.feeding_pattern.counts,
+                type: 'bar',
+                marker: { color: '#0d6efd' }
+            }];
+            
+            Plotly.newPlot('feedingPatternChart', feedingData, {
+                title: '',
+                xaxis: { title: 'Hour of Day' },
+                yaxis: { title: 'Feeding Count' },
+                margin: { t: 20, b: 40, l: 40, r: 20 }
+            }, { responsive: true });
+        }
+        
+        // Sleep Pattern Chart
+        if (chartData.sleep_pattern && document.getElementById('sleepPatternChart')) {
+            const sleepData = [{
+                x: chartData.sleep_pattern.dates,
+                y: chartData.sleep_pattern.durations,
+                type: 'bar',
+                marker: { color: '#ffc107' }
+            }];
+            
+            Plotly.newPlot('sleepPatternChart', sleepData, {
+                title: '',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Sleep Hours' },
+                margin: { t: 20, b: 40, l: 40, r: 20 }
+            }, { responsive: true });
+        }
+    }
+    
+    // Filter form submission
+    document.getElementById('filterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const params = new URLSearchParams(formData);
+        
+        window.location.href = '/analytics?' + params.toString();
+    });
+    
+    function exportData(format) {
+        const formData = new FormData(document.getElementById('filterForm'));
+        formData.append('format', format);
+        
+        const params = new URLSearchParams(formData);
+        
+        // Create a temporary link to download the file
+        const link = document.createElement('a');
+        link.href = '/api/export?' + params.toString();
+        link.download = `baby_care_data.${format}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast(`Exporting data as ${format.toUpperCase()}...`, 'info');
+    }
+    
+    function refreshAnalytics() {
+        window.location.reload();
+    }
+    
+    // Set default date range to last 30 days if not set
+    document.addEventListener('DOMContentLoaded', function() {
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        
+        if (!startDate.value) {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            startDate.value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+        
+        if (!endDate.value) {
+            const today = new Date();
+            endDate.value = today.toISOString().split('T')[0];
+        }
+    });
+</script>
+{% endblock %}

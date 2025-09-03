@@ -1,0 +1,552 @@
+{% extends "base.html" %}
+
+{% block title %}Device Management - Baby Care Tracker{% endblock %}
+
+{% block content %}
+<!-- Device Discovery -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Device Discovery</h5>
+                <button class="btn btn-primary" onclick="discoverDevices()">
+                    <i class="fas fa-sync-alt me-2"></i>Discover Devices
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="discoveryStatus" class="mb-3"></div>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                            <input type="text" class="form-control" id="deviceFilter" 
+                                   placeholder="Filter devices..." onkeyup="filterDevices()">
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <select class="form-select" id="deviceTypeFilter" onchange="filterDevices()">
+                            <option value="">All Device Types</option>
+                            <option value="switch">Switches</option>
+                            <option value="button">Buttons</option>
+                            <option value="sensor">Sensors</option>
+                            <option value="light">Lights</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <select class="form-select" id="statusFilter" onchange="filterDevices()">
+                            <option value="">All Devices</option>
+                            <option value="mapped">Mapped</option>
+                            <option value="unmapped">Unmapped</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="devicesList">
+                    {% if discovered_devices %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Device Name</th>
+                                        <th>Device ID</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Current Mapping</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for device in discovered_devices %}
+                                    <tr data-device-type="{{ device.device_type }}" 
+                                        data-mapped="{{ 'mapped' if device.current_mapping else 'unmapped' }}">
+                                        <td>
+                                            <strong>{{ device.friendly_name or device.device_id }}</strong>
+                                            {% if device.manufacturer %}
+                                                <br><small class="text-muted">{{ device.manufacturer }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td><code>{{ device.device_id }}</code></td>
+                                        <td>
+                                            <span class="badge bg-{{ 
+                                                'primary' if device.device_type == 'switch'
+                                                else 'success' if device.device_type == 'button'
+                                                else 'warning' if device.device_type == 'sensor'
+                                                else 'info' if device.device_type == 'light'
+                                                else 'secondary' }}">
+                                                {{ device.device_type.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if device.available else 'danger' }}">
+                                                {{ 'Available' if device.available else 'Unavailable' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if device.current_mapping %}
+                                                <span class="badge bg-info">{{ device.current_mapping }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Not mapped</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" 
+                                                        onclick="showMappingModal('{{ device.device_id }}', '{{ device.friendly_name or device.device_id }}', '{{ device.current_mapping or '' }}')">
+                                                    <i class="fas fa-cog"></i> Map
+                                                </button>
+                                                {% if device.current_mapping %}
+                                                <button class="btn btn-outline-danger" 
+                                                        onclick="removeMapping('{{ device.device_id }}')">
+                                                    <i class="fas fa-times"></i> Remove
+                                                </button>
+                                                {% endif %}
+                                                <button class="btn btn-outline-info" 
+                                                        onclick="testDevice('{{ device.device_id }}')">
+                                                    <i class="fas fa-play"></i> Test
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-search fa-3x mb-3"></i>
+                            <h5>No Devices Found</h5>
+                            <p>Click "Discover Devices" to scan for available Home Assistant devices</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Mappings -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-link me-2"></i>Current Device Mappings</h5>
+            </div>
+            <div class="card-body">
+                {% if device_mappings %}
+                    <div class="row">
+                        {% for mapping in device_mappings %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-start border-primary border-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="card-title">{{ mapping.device_name or mapping.device_id }}</h6>
+                                            <p class="card-text">
+                                                <span class="badge bg-primary">{{ mapping.baby_care_action }}</span>
+                                                {% if mapping.button_action %}
+                                                    <br><small class="text-muted">{{ mapping.button_action }}</small>
+                                                {% endif %}
+                                            </p>
+                                            <small class="text-muted">
+                                                Last used: {{ mapping.last_triggered.strftime('%Y-%m-%d %H:%M') if mapping.last_triggered else 'Never' }}
+                                            </small>
+                                        </div>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" data-bs-toggle="dropdown">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" 
+                                                       onclick="editMapping('{{ mapping.device_id }}')">
+                                                    <i class="fas fa-edit me-2"></i>Edit
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" 
+                                                       onclick="testDevice('{{ mapping.device_id }}')">
+                                                    <i class="fas fa-play me-2"></i>Test
+                                                </a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#" 
+                                                       onclick="removeMapping('{{ mapping.device_id }}')">
+                                                    <i class="fas fa-trash me-2"></i>Remove
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-unlink fa-3x mb-3"></i>
+                        <h5>No Device Mappings</h5>
+                        <p>Configure device mappings above to automatically log baby care events</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MQTT Configuration -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>MQTT Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form id="mqttConfigForm">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="mqttEnabled" class="form-label">MQTT Integration</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="mqttEnabled" 
+                                       {{ 'checked' if mqtt_config.enabled }}>
+                                <label class="form-check-label" for="mqttEnabled">
+                                    Enable MQTT device discovery
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="mqttHost" class="form-label">MQTT Host</label>
+                            <input type="text" class="form-control" id="mqttHost" 
+                                   value="{{ mqtt_config.host or 'localhost' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="mqttPort" class="form-label">MQTT Port</label>
+                            <input type="number" class="form-control" id="mqttPort" 
+                                   value="{{ mqtt_config.port or 1883 }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="mqttUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="mqttUsername" 
+                                   value="{{ mqtt_config.username or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="mqttPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="mqttPassword" 
+                                   placeholder="Enter password if changed">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="mqttTopics" class="form-label">
+                                Custom Topics 
+                                <small class="text-muted">(one per line, supports wildcards)</small>
+                            </label>
+                            <textarea class="form-control" id="mqttTopics" rows="3" 
+                                      placeholder="zigbee2mqtt/+/action&#10;homeassistant/button/+/action">{{ mqtt_config.custom_topics }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Configuration
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ms-2" onclick="testMqttConnection()">
+                                <i class="fas fa-plug me-2"></i>Test Connection
+                            </button>
+                        </div>
+                        <div id="mqttStatus">
+                            <span class="badge bg-{{ 'success' if mqtt_config.connected else 'danger' }}">
+                                {{ 'Connected' if mqtt_config.connected else 'Disconnected' }}
+                            </span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Device Mapping Modal -->
+<div class="modal fade" id="mappingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configure Device Mapping</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="mappingForm">
+                    <input type="hidden" id="modalDeviceId">
+                    
+                    <div class="mb-3">
+                        <label for="modalDeviceName" class="form-label">Device Name</label>
+                        <input type="text" class="form-control" id="modalDeviceName" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalBabyCareAction" class="form-label">Baby Care Action</label>
+                        <select class="form-select" id="modalBabyCareAction" required>
+                            <option value="">Select an action...</option>
+                            <option value="feeding_start_left">Start Feeding (Left Breast)</option>
+                            <option value="feeding_start_right">Start Feeding (Right Breast)</option>
+                            <option value="feeding_end">End Feeding</option>
+                            <option value="sleep_start">Start Sleep</option>
+                            <option value="sleep_end">End Sleep</option>
+                            <option value="diaper_wet">Diaper Change (Wet)</option>
+                            <option value="diaper_dirty">Diaper Change (Dirty)</option>
+                            <option value="diaper_both">Diaper Change (Both)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalButtonAction" class="form-label">Button Action (Optional)</label>
+                        <select class="form-select" id="modalButtonAction">
+                            <option value="">Any action</option>
+                            <option value="single">Single Press</option>
+                            <option value="double">Double Press</option>
+                            <option value="triple">Triple Press</option>
+                            <option value="hold">Hold</option>
+                            <option value="on">Turn On</option>
+                            <option value="off">Turn Off</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            Specify the button action that should trigger the baby care event
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalNotes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="modalNotes" rows="2" 
+                                  placeholder="Additional notes for this mapping"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveMapping()">Save Mapping</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let mappingModal = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        mappingModal = new bootstrap.Modal(document.getElementById('mappingModal'));
+    });
+    
+    function discoverDevices() {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span class="loading-spinner"></span> Discovering...';
+        button.disabled = true;
+        
+        document.getElementById('discoveryStatus').innerHTML = 
+            '<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>Scanning for devices...</div>';
+        
+        fetch('/api/devices/discover', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Found ${data.device_count} devices`, 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast('Error discovering devices: ' + data.error, 'danger');
+                document.getElementById('discoveryStatus').innerHTML = 
+                    `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            showToast('Error discovering devices: ' + error.message, 'danger');
+            document.getElementById('discoveryStatus').innerHTML = 
+                `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+    
+    function filterDevices() {
+        const nameFilter = document.getElementById('deviceFilter').value.toLowerCase();
+        const typeFilter = document.getElementById('deviceTypeFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        
+        const rows = document.querySelectorAll('#devicesList tbody tr');
+        
+        rows.forEach(row => {
+            const deviceName = row.cells[0].textContent.toLowerCase();
+            const deviceType = row.dataset.deviceType;
+            const mapped = row.dataset.mapped;
+            
+            const nameMatch = !nameFilter || deviceName.includes(nameFilter);
+            const typeMatch = !typeFilter || deviceType === typeFilter;
+            const statusMatch = !statusFilter || mapped === statusFilter;
+            
+            row.style.display = (nameMatch && typeMatch && statusMatch) ? '' : 'none';
+        });
+    }
+    
+    function showMappingModal(deviceId, deviceName, currentMapping) {
+        document.getElementById('modalDeviceId').value = deviceId;
+        document.getElementById('modalDeviceName').value = deviceName;
+        document.getElementById('modalBabyCareAction').value = currentMapping;
+        
+        mappingModal.show();
+    }
+    
+    function editMapping(deviceId) {
+        // Get current mapping details and show modal
+        fetch(`/api/devices/mappings/${deviceId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const mapping = data.mapping;
+                showMappingModal(mapping.device_id, mapping.device_name, mapping.baby_care_action);
+                document.getElementById('modalButtonAction').value = mapping.button_action || '';
+                document.getElementById('modalNotes').value = mapping.notes || '';
+            }
+        })
+        .catch(error => {
+            showToast('Error loading mapping: ' + error.message, 'danger');
+        });
+    }
+    
+    function saveMapping() {
+        const deviceId = document.getElementById('modalDeviceId').value;
+        const deviceName = document.getElementById('modalDeviceName').value;
+        const babyCareAction = document.getElementById('modalBabyCareAction').value;
+        const buttonAction = document.getElementById('modalButtonAction').value;
+        const notes = document.getElementById('modalNotes').value;
+        
+        if (!babyCareAction) {
+            showToast('Please select a baby care action', 'warning');
+            return;
+        }
+        
+        fetch('/api/devices/mappings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                device_id: deviceId,
+                device_name: deviceName,
+                baby_care_action: babyCareAction,
+                button_action: buttonAction,
+                notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Device mapping saved successfully', 'success');
+                mappingModal.hide();
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast('Error saving mapping: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error saving mapping: ' + error.message, 'danger');
+        });
+    }
+    
+    function removeMapping(deviceId) {
+        if (!confirm('Are you sure you want to remove this device mapping?')) {
+            return;
+        }
+        
+        fetch(`/api/devices/mappings/${deviceId}`, { method: 'DELETE' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Device mapping removed', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast('Error removing mapping: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error removing mapping: ' + error.message, 'danger');
+        });
+    }
+    
+    function testDevice(deviceId) {
+        fetch(`/api/devices/test/${deviceId}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Test event logged successfully', 'success');
+            } else {
+                showToast('Error testing device: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error testing device: ' + error.message, 'danger');
+        });
+    }
+    
+    function testMqttConnection() {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span class="loading-spinner"></span> Testing...';
+        button.disabled = true;
+        
+        fetch('/api/mqtt/test', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('MQTT connection successful', 'success');
+                document.getElementById('mqttStatus').innerHTML = 
+                    '<span class="badge bg-success">Connected</span>';
+            } else {
+                showToast('MQTT connection failed: ' + data.error, 'danger');
+                document.getElementById('mqttStatus').innerHTML = 
+                    '<span class="badge bg-danger">Connection Failed</span>';
+            }
+        })
+        .catch(error => {
+            showToast('Error testing MQTT: ' + error.message, 'danger');
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+    
+    // MQTT Configuration form
+    document.getElementById('mqttConfigForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const config = {
+            enabled: document.getElementById('mqttEnabled').checked,
+            host: document.getElementById('mqttHost').value,
+            port: parseInt(document.getElementById('mqttPort').value),
+            username: document.getElementById('mqttUsername').value,
+            password: document.getElementById('mqttPassword').value,
+            custom_topics: document.getElementById('mqttTopics').value
+        };
+        
+        fetch('/api/mqtt/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('MQTT configuration saved', 'success');
+            } else {
+                showToast('Error saving MQTT config: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error saving MQTT config: ' + error.message, 'danger');
+        });
+    });
+</script>
+{% endblock %}

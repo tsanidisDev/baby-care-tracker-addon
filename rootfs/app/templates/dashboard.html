@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Baby Care Tracker{% endblock %}
+
+{% block content %}
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <button class="btn btn-primary w-100" onclick="logEvent('feeding_start_left')">
+                            <i class="fas fa-baby-bottle me-2"></i>Left Breast
+                        </button>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <button class="btn btn-success w-100" onclick="logEvent('feeding_start_right')">
+                            <i class="fas fa-baby-bottle me-2"></i>Right Breast
+                        </button>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <button class="btn btn-warning w-100" onclick="logEvent('sleep_start')">
+                            <i class="fas fa-moon me-2"></i>Start Sleep
+                        </button>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <button class="btn btn-danger w-100" onclick="logEvent('diaper_both')">
+                            <i class="fas fa-baby-carriage me-2"></i>Diaper Change
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card stat-card">
+            <div class="stat-number feeding-left" id="feedingCount">{{ daily_stats.feeding_count or 0 }}</div>
+            <div class="stat-label">Feedings Today</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card stat-card">
+            <div class="stat-number sleep-indicator" id="sleepHours">{{ daily_stats.sleep_duration_hours or 0 }}</div>
+            <div class="stat-label">Sleep Hours</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card stat-card">
+            <div class="stat-number diaper-indicator" id="diaperCount">{{ daily_stats.diaper_changes or 0 }}</div>
+            <div class="stat-label">Diaper Changes</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card stat-card">
+            <div class="stat-number text-info" id="totalEvents">{{ daily_stats.total_events or 0 }}</div>
+            <div class="stat-label">Total Events</div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Status -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Current Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Sleep Status:</strong>
+                    <span class="badge bg-{{ 'warning' if daily_stats.current_sleep_status == 'sleeping' else 'success' }}">
+                        {{ daily_stats.current_sleep_status or 'Unknown' }}
+                    </span>
+                </div>
+                
+                {% if daily_stats.last_feeding %}
+                <div class="mb-3">
+                    <strong>Last Feeding:</strong>
+                    <span class="text-muted">{{ daily_stats.last_feeding }}</span>
+                </div>
+                {% endif %}
+                
+                {% if daily_stats.last_diaper %}
+                <div class="mb-3">
+                    <strong>Last Diaper Change:</strong>
+                    <span class="text-muted">{{ daily_stats.last_diaper }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-link me-2"></i>Device Mappings</h5>
+            </div>
+            <div class="card-body">
+                {% if device_mappings %}
+                    <div class="small">
+                        <strong>{{ device_mappings|length }}</strong> device(s) configured
+                    </div>
+                    {% for mapping in device_mappings[:3] %}
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small">{{ mapping.device_name or mapping.device_id }}</span>
+                        <span class="badge bg-secondary small">{{ mapping.baby_care_action }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if device_mappings|length > 3 %}
+                    <div class="text-center mt-2">
+                        <a href="/devices" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                        <p>No devices configured yet</p>
+                        <a href="/devices" class="btn btn-sm btn-primary">Configure Devices</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Events -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Events</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="refreshEvents()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="eventsContainer">
+                    {% if recent_events %}
+                        {% for event in recent_events %}
+                        <div class="timeline-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ event.event_type.replace('_', ' ').title() }}</strong>
+                                    {% if event.notes %}
+                                        <p class="mb-1 text-muted">{{ event.notes }}</p>
+                                    {% endif %}
+                                    {% if event.device_source %}
+                                        <small class="text-info">
+                                            <i class="fas fa-microchip me-1"></i>{{ event.device_source }}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">{{ event.timestamp }}</small>
+                                    {% if event.duration %}
+                                        <br><small class="text-success">{{ event.duration }}min</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-baby fa-3x mb-3"></i>
+                            <p>No events recorded yet</p>
+                            <p class="small">Use the quick actions above to start tracking baby care events</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {% if recent_events and recent_events|length >= 10 %}
+                <div class="text-center mt-3">
+                    <a href="/analytics" class="btn btn-outline-primary">View All Events</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function logEvent(eventType) {
+        // Show loading state
+        const button = event.target;
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<span class="loading-spinner"></span> Logging...';
+        button.disabled = true;
+        
+        fetch('/api/events', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: eventType,
+                notes: '',
+                device_source: 'manual'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`${eventType.replace('_', ' ').title()} logged successfully`, 'success');
+                refreshDashboard();
+            } else {
+                showToast('Error logging event: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error logging event: ' + error.message, 'danger');
+        })
+        .finally(() => {
+            button.innerHTML = originalContent;
+            button.disabled = false;
+        });
+    }
+    
+    function refreshEvents() {
+        fetch('/api/events?limit=10')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateEventsDisplay(data.events);
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing events:', error);
+        });
+    }
+    
+    function updateEventsDisplay(events) {
+        const container = document.getElementById('eventsContainer');
+        
+        if (events.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-baby fa-3x mb-3"></i>
+                    <p>No events recorded yet</p>
+                    <p class="small">Use the quick actions above to start tracking baby care events</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = events.map(event => `
+            <div class="timeline-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>${event.event_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong>
+                        ${event.notes ? `<p class="mb-1 text-muted">${event.notes}</p>` : ''}
+                        ${event.device_source ? `<small class="text-info"><i class="fas fa-microchip me-1"></i>${event.device_source}</small>` : ''}
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted">${new Date(event.timestamp).toLocaleString()}</small>
+                        ${event.duration ? `<br><small class="text-success">${event.duration}min</small>` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function refreshDashboard() {
+        // Refresh the entire page to get updated stats
+        // In a real implementation, you'd update specific elements
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+    
+    function updateDashboard(eventData) {
+        // Update statistics when new events come in via WebSocket
+        const feedingCount = document.getElementById('feedingCount');
+        const diaperCount = document.getElementById('diaperCount');
+        const totalEvents = document.getElementById('totalEvents');
+        
+        if (eventData.type.includes('feeding')) {
+            feedingCount.textContent = parseInt(feedingCount.textContent) + 1;
+        }
+        
+        if (eventData.type.includes('diaper')) {
+            diaperCount.textContent = parseInt(diaperCount.textContent) + 1;
+        }
+        
+        totalEvents.textContent = parseInt(totalEvents.textContent) + 1;
+        
+        // Refresh events list
+        refreshEvents();
+    }
+    
+    // Function for auto-refresh
+    function refreshData() {
+        refreshEvents();
+    }
+</script>
+{% endblock %}
