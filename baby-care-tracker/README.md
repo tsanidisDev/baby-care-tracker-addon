@@ -33,10 +33,36 @@ For detailed installation instructions, see [INSTALLATION.md](../INSTALLATION.md
 4. Access the web interface on port 8099
 5. Begin tracking your baby's care activities
 
+## Updates
+
+The Baby Care Tracker add-on supports automatic updates through Home Assistant.
+
+### Updating the Add-on
+
+1. Navigate to **Supervisor** → **Add-ons** → **Baby Care Tracker**
+2. If an update is available, click the **Update** button
+3. Your data and configuration will be preserved automatically
+4. The add-on will restart with the new version
+
+### Version Information
+
+- Check `/api/version` endpoint for current version information
+- View the [Changelog](CHANGELOG.md) for detailed release notes
+- See [Update Guide](UPDATE_GUIDE.md) for troubleshooting
+
+### Data Safety
+
+All your tracking data is safely preserved during updates:
+- ✅ Database files remain intact
+- ✅ Configuration settings are maintained  
+- ✅ MQTT mappings are preserved
+- ✅ Analytics history is retained
+
 ## Support
 
 - [Documentation](../README.md)
 - [Installation Guide](../INSTALLATION.md)
+- [Update Guide](UPDATE_GUIDE.md)
 - [GitHub Issues](https://github.com/tsanidisDev/baby-care-tracker-addon/issues)
 
 ---

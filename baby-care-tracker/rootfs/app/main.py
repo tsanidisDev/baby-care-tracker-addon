@@ -37,6 +37,7 @@ try:
     from analytics import Analytics
     from device_manager import DeviceManager
     from utils import setup_logging, load_config
+    from migrations import run_migrations
     print("Application modules imported successfully")
 except ImportError as e:
     print(f"ERROR importing application modules: {e}")
@@ -51,9 +52,14 @@ print("Loading configuration...")
 CONFIG = load_config()
 print(f"Configuration loaded: {CONFIG}")
 
+# Application version
+APP_VERSION = "1.0.3"
+print(f"Baby Care Tracker Add-on version: {APP_VERSION}")
+
 print("Setting up logging...")
 logger = setup_logging(CONFIG.get('log_level', 'info'))
 logger.info("=== Baby Care Tracker Application Starting ===")
+logger.info(f"Version: {APP_VERSION}")
 logger.info(f"Configuration: {CONFIG}")
 
 # Initialize Flask app
@@ -77,6 +83,14 @@ def initialize_components():
     global db, mqtt_client, analytics, device_manager
     
     try:
+        # Run database migrations if needed
+        logger.info("Checking for database migrations...")
+        print("Checking for database migrations...")
+        db_path = CONFIG.get('database_path', '/data/baby_care.db')
+        run_migrations(db_path, APP_VERSION)
+        logger.info("Database migrations completed")
+        print("Database migrations completed")
+        
         # Initialize database
         logger.info("Initializing database...")
         print("Initializing database...")
@@ -329,9 +343,39 @@ def health_check():
             'timestamp': datetime.now().isoformat(),
             'database': 'connected' if db and db.is_healthy() else 'disconnected',
             'mqtt': 'connected' if mqtt_client and mqtt_client.is_connected() else 'disconnected',
-            'version': '2.0.0'
+            'version': APP_VERSION
         }
         return jsonify(health_status)
+        
+    except Exception as e:
+        logger.error(f"Health check error: {e}")
+        return jsonify({
+            'status': 'unhealthy',
+            'timestamp': datetime.now().isoformat(),
+            'error': str(e),
+            'version': APP_VERSION
+        }), 500
+
+@app.route('/api/version')
+def get_version():
+    """Get application version information"""
+    try:
+        version_info = {
+            'version': APP_VERSION,
+            'name': 'Baby Care Tracker',
+            'description': 'Complete baby care tracking solution',
+            'timestamp': datetime.now().isoformat(),
+            'config': {
+                'database_type': CONFIG.get('database_type', 'sqlite'),
+                'mqtt_enabled': bool(CONFIG.get('mqtt_broker')),
+                'analytics_enabled': CONFIG.get('enable_analytics', True)
+            }
+        }
+        return jsonify(version_info)
+        
+    except Exception as e:
+        logger.error(f"Version check error: {e}")
+        return jsonify({'error': str(e)}), 500
         
     except Exception as e:
         logger.error(f"Health check failed: {e}")

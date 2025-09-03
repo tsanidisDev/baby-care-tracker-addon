@@ -88,6 +88,6 @@ LABEL \
     io.hass.description="Complete baby care tracking solution" \
     io.hass.arch="aarch64|amd64|armhf|armv7|i386" \
     io.hass.type="addon" \
-    io.hass.version="1.0.2"
+    io.hass.version="1.0.3"
 
 CMD ["/run.sh"]
