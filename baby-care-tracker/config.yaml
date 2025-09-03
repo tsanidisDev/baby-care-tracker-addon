@@ -1,6 +1,6 @@
 name: Baby Care Tracker
 description: Complete baby care tracking solution with persistent data, analytics, and device integration
-version: "1.0.0"
+version: "1.0.1"
 slug: baby_care_tracker
 startup: services
 build_from:
