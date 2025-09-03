@@ -612,3 +612,42 @@ class Analytics:
             
         except Exception as e:
             logger.error(f"Error generating daily report: {e}")
+
+    def get_growth_trends(self) -> Dict[str, Any]:
+        """Get growth trends and analytics"""
+        try:
+            # For now, return basic growth metrics
+            # This can be expanded later to include weight/height tracking
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=30)  # Last 30 days
+            
+            events = self.db.get_events_by_date_range(start_date, end_date)
+            
+            # Calculate feeding frequency trends
+            daily_feeding_counts = {}
+            for event in events:
+                if 'feeding' in event['event_type']:
+                    event_date = datetime.fromisoformat(event['timestamp']).date()
+                    daily_feeding_counts[event_date] = daily_feeding_counts.get(event_date, 0) + 1
+            
+            # Calculate averages
+            feeding_days = list(daily_feeding_counts.values())
+            avg_feedings = sum(feeding_days) / len(feeding_days) if feeding_days else 0
+            
+            return {
+                'average_daily_feedings': round(avg_feedings, 1),
+                'feeding_trend': 'stable',  # Can be enhanced with trend analysis
+                'total_days_tracked': len(feeding_days),
+                'most_feedings_day': max(feeding_days) if feeding_days else 0,
+                'least_feedings_day': min(feeding_days) if feeding_days else 0
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting growth trends: {e}")
+            return {
+                'average_daily_feedings': 0,
+                'feeding_trend': 'unknown',
+                'total_days_tracked': 0,
+                'most_feedings_day': 0,
+                'least_feedings_day': 0
+            }

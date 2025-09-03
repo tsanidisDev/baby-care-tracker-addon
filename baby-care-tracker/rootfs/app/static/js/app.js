@@ -29,6 +29,14 @@ function initializeApp() {
     
     // Setup auto-save for forms
     setupAutoSave();
+    
+    // Initialize dashboard if we're on the dashboard page
+    if (window.location.pathname === '/' || window.location.pathname === '/dashboard') {
+        // Small delay to ensure DOM is fully ready
+        setTimeout(() => {
+            refreshDashboardStats();
+        }, 100);
+    }
 }
 
 // Initialize WebSocket connection
@@ -509,6 +517,98 @@ function initializeOfflineSupport() {
                 console.log('Service Worker registration failed:', error);
             });
     }
+}
+
+// Update dashboard statistics
+function updateDashboard(eventData) {
+    // If eventData is provided, update specific stats based on the event
+    if (eventData) {
+        // For real-time updates when events are received
+        updateStatsFromEvent(eventData);
+    }
+    
+    // Always fetch fresh data from server to ensure accuracy
+    refreshDashboardStats();
+}
+
+// Update stats based on received event data
+function updateStatsFromEvent(eventData) {
+    try {
+        const feedingCount = document.getElementById('feedingCount');
+        const sleepHours = document.getElementById('sleepHours');
+        const diaperCount = document.getElementById('diaperCount');
+        const totalEvents = document.getElementById('totalEvents');
+        
+        // Increment counters based on event type
+        if (eventData.type && eventData.type.startsWith('feeding_start')) {
+            if (feedingCount) {
+                const current = parseInt(feedingCount.textContent) || 0;
+                feedingCount.textContent = current + 1;
+            }
+        } else if (eventData.type && eventData.type.startsWith('diaper_')) {
+            if (diaperCount) {
+                const current = parseInt(diaperCount.textContent) || 0;
+                diaperCount.textContent = current + 1;
+            }
+        }
+        
+        // Always increment total events
+        if (totalEvents) {
+            const current = parseInt(totalEvents.textContent) || 0;
+            totalEvents.textContent = current + 1;
+        }
+        
+    } catch (error) {
+        console.error('Error updating stats from event:', error);
+    }
+}
+
+// Fetch fresh dashboard statistics from server
+function refreshDashboardStats() {
+    fetch('/api/daily-stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                updateDashboardDisplay(data.data);
+            } else {
+                console.error('Failed to fetch daily stats:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching daily stats:', error);
+        });
+}
+
+// Update dashboard display with fresh data
+function updateDashboardDisplay(stats) {
+    try {
+        // Update the stat cards
+        const feedingCount = document.getElementById('feedingCount');
+        const sleepHours = document.getElementById('sleepHours');
+        const diaperCount = document.getElementById('diaperCount');
+        const totalEvents = document.getElementById('totalEvents');
+        
+        if (feedingCount) feedingCount.textContent = stats.feeding_count || 0;
+        if (sleepHours) sleepHours.textContent = stats.sleep_duration_hours || 0;
+        if (diaperCount) diaperCount.textContent = stats.diaper_changes || 0;
+        if (totalEvents) totalEvents.textContent = stats.total_events || 0;
+        
+        console.log('Dashboard stats updated:', stats);
+        
+    } catch (error) {
+        console.error('Error updating dashboard display:', error);
+    }
+}
+
+// Global refresh function for auto-refresh
+function refreshData() {
+    // Check if we're on the dashboard page
+    if (window.location.pathname === '/' || window.location.pathname === '/dashboard') {
+        refreshDashboardStats();
+    }
+    
+    // Could add other page-specific refresh logic here
+    console.log('Data refreshed');
 }
 
 // Cleanup function

@@ -133,6 +133,176 @@ def on_device_event(device_id, event_type, data):
                 trigger_data=data
             )
             
+            # Emit real-time update
+            socketio.emit('new_event', {
+                'event_id': event_id,
+                'event_type': mapping['baby_care_action'],
+                'timestamp': datetime.now().isoformat(),
+                'device_source': device_id
+            })
+            
+            logger.info(f"Logged baby care event {mapping['baby_care_action']} from device {device_id}")
+            
+    except Exception as e:
+        logger.error(f"Error handling device event: {e}")
+
+# ============================================================================
+# WEB ROUTES
+# ============================================================================
+
+@app.route('/')
+def dashboard():
+    """Main dashboard"""
+    try:
+        recent_events = db.get_recent_events(limit=10)
+        daily_stats = analytics.get_daily_stats()
+        device_mappings = device_manager.get_all_mappings()
+        
+        return render_template('dashboard.html',
+                             recent_events=recent_events,
+                             daily_stats=daily_stats,
+                             device_mappings=device_mappings)
+    except Exception as e:
+        logger.error(f"Error loading dashboard: {e}")
+        return render_template('error.html', error=str(e)), 500
+
+@app.route('/analytics')
+def analytics_page():
+    """Analytics and reports page"""
+    try:
+        # Get analytics data
+        feeding_stats = analytics.get_feeding_analytics()
+        sleep_stats = analytics.get_sleep_analytics()
+        diaper_stats = analytics.get_diaper_analytics()
+        growth_data = analytics.get_growth_trends()
+        
+        return render_template('analytics.html',
+                             feeding_stats=feeding_stats,
+                             sleep_stats=sleep_stats,
+                             diaper_stats=diaper_stats,
+                             growth_data=growth_data)
+    except Exception as e:
+        logger.error(f"Error loading analytics: {e}")
+        return render_template('error.html', error=str(e)), 500om datetime import datetime
+
+print("=== Baby Care Tracker Python Application Starting ===")
+print(f"Python version: {sys.version}")
+print(f"Current working directory: {os.getcwd()}")
+print(f"Python path: {sys.path}")
+print(f"Environment variables:")
+for key, value in os.environ.items():
+    if 'MQTT' in key or 'DATABASE' in key or 'LOG' in key:
+        print(f"  {key}={value}")
+
+try:
+    print("Importing Flask modules...")
+    from flask import Flask, render_template, request, jsonify, send_file
+    from flask_cors import CORS
+    from flask_socketio import SocketIO, emit
+    print("Flask modules imported successfully")
+except ImportError as e:
+    print(f"ERROR importing Flask modules: {e}")
+    sys.exit(1)
+
+try:
+    print("Importing application modules...")
+    from database import Database
+    from mqtt_client import MQTTClient
+    from analytics import Analytics
+    from device_manager import DeviceManager
+    from utils import setup_logging, load_config
+    from migrations import run_migrations
+    print("Application modules imported successfully")
+except ImportError as e:
+    print(f"ERROR importing application modules: {e}")
+    print("Checking if modules exist...")
+    import glob
+    py_files = glob.glob("*.py")
+    print(f"Python files in current directory: {py_files}")
+    sys.exit(1)
+
+# Configuration
+print("Loading configuration...")
+CONFIG = load_config()
+print(f"Configuration loaded: {CONFIG}")
+
+# Application version
+APP_VERSION = "1.0.4"
+print(f"Baby Care Tracker Add-on version: {APP_VERSION}")
+
+print("Setting up logging...")
+logger = setup_logging(CONFIG.get('log_level', 'info'))
+logger.info("=== Baby Care Tracker Application Starting ===")
+logger.info(f"Version: {APP_VERSION}")
+logger.info(f"Configuration: {CONFIG}")
+
+# Initialize Flask app
+print("Initializing Flask application...")
+app = Flask(__name__, 
+           template_folder='templates',
+           static_folder='static')
+app.config['SECRET_KEY'] = 'baby-care-tracker-secret-key'
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+print("Flask application initialized")
+
+# Global components
+db = None
+mqtt_client = None
+analytics = None
+device_manager = None
+
+def initialize_components():
+    """Initialize all application components"""
+    global db, mqtt_client, analytics, device_manager
+    
+    try:
+        # Run database migrations if needed
+        logger.info("Checking for database migrations...")
+        print("Checking for database migrations...")
+        db_path = CONFIG.get('database_path', '/data/baby_care.db')
+        run_migrations(db_path, APP_VERSION)
+        logger.info("Database migrations completed")
+        print("Database migrations completed")
+        
+        # Initialize database
+        logger.info("Initializing database...")
+        print("Initializing database...")
+        db = Database(CONFIG)
+        logger.info("Database initialized successfully")
+        print("Database initialized successfully")
+        
+        # Initialize MQTT client
+        logger.info("Initializing MQTT client...")
+        mqtt_client = MQTTClient(CONFIG, on_device_event)
+        
+        # Initialize analytics
+        logger.info("Initializing analytics...")
+        analytics = Analytics(db)
+        
+        # Initialize device manager
+        logger.info("Initializing device manager...")
+        device_manager = DeviceManager(CONFIG)
+        
+        logger.info("All components initialized successfully")
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize components: {e}")
+        sys.exit(1)
+
+def on_device_event(device_id, event_type, data):
+    """Handle device events from MQTT"""
+    try:
+        # Check if this device is mapped to a baby care action
+        mapping = device_manager.get_mapping(device_id, event_type)
+        if mapping:
+            # Log the baby care event
+            event_id = db.add_event(
+                event_type=mapping['baby_care_action'],
+                device_source=device_id,
+                trigger_data=data
+            )
+            
             # Emit real-time update to web clients
             socketio.emit('new_event', {
                 'id': event_id,
@@ -191,17 +361,10 @@ def devices_page():
     try:
         available_devices = device_manager.discover_devices()
         current_mappings = device_manager.get_all_mappings()
-        mqtt_config = {
-            'broker': CONFIG.get('mqtt_broker', 'core-mosquitto'),
-            'username': CONFIG.get('mqtt_username', ''),
-            'connected': mqtt_client.is_connected() if mqtt_client else False,
-            'status': 'Connected' if (mqtt_client and mqtt_client.is_connected()) else 'Disconnected'
-        }
         
         return render_template('devices.html',
                              available_devices=available_devices,
-                             current_mappings=current_mappings,
-                             mqtt_config=mqtt_config)
+                             current_mappings=current_mappings)
     except Exception as e:
         logger.error(f"Error loading devices page: {e}")
         return render_template('error.html', error=str(e)), 500
@@ -340,17 +503,6 @@ def api_sleep_analytics():
         
     except Exception as e:
         logger.error(f"Error getting sleep analytics: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/daily-stats')
-def api_daily_stats():
-    """Get current daily statistics"""
-    try:
-        daily_stats = analytics.get_daily_stats()
-        return jsonify({'success': True, 'data': daily_stats})
-        
-    except Exception as e:
-        logger.error(f"Error getting daily stats: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/export/<format>')
@@ -494,7 +646,10 @@ def main():
         print(f"Debug mode: {CONFIG.get('debug', False)}")
         print("Web server is about to start...")
         
-        # Start socketio server (gevent already patched at startup)
+        # Use gevent for better async performance
+        from gevent import monkey
+        monkey.patch_all()
+        
         socketio.run(app, 
                     host='0.0.0.0', 
                     port=8099, 
