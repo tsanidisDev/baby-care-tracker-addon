@@ -1,8 +1,8 @@
-name: "Baby Care Tracker"
-description: "Complete baby care tracking solution with persistent data, analytics, and device integration"
-version: "2.0.0"
-slug: "baby-care-tracker"
-startup: "services"
+name: Baby Care Tracker
+description: Complete baby care tracking solution with persistent data, analytics, and device integration
+version: "1.0.0"
+slug: baby_care_tracker
+startup: services
 arch:
   - armhf
   - armv7
@@ -12,28 +12,21 @@ arch:
 ports:
   8099/tcp: 8099
 ports_description:
-  8099/tcp: "Web interface"
+  8099/tcp: Web interface
 webui: "http://[HOST]:[PORT:8099]"
 init: false
 map:
-  - "config:rw"
-  - "ssl"
+  - config:rw
+  - ssl
 options:
-  mqtt_broker: "core-mosquitto"
+  mqtt_broker: core-mosquitto
   mqtt_username: ""
   mqtt_password: ""
-  database_type: "sqlite"
-  log_level: "info"
-  enable_analytics: true
-  export_enabled: true
-  timezone: "UTC"
+  database_type: sqlite
+  log_level: info
 schema:
-  mqtt_broker: "str"
-  mqtt_username: "str?"
-  mqtt_password: "password?"
-  database_type: "list(sqlite|postgresql)?"
-  log_level: "list(trace|debug|info|notice|warning|error|fatal)?"
-  enable_analytics: "bool"
-  export_enabled: "bool"
-  timezone: "str"
-image: "ghcr.io/tsanidisdev/baby-care-tracker-addon-{arch}"
+  mqtt_broker: str
+  mqtt_username: str?
+  mqtt_password: password?
+  database_type: list(sqlite|postgresql)?
+  log_level: list(trace|debug|info|notice|warning|error|fatal)?

@@ -1,0 +1,2 @@
+# Icon placeholder - you should replace this with an actual PNG icon file
+# For testing purposes, we'll create this as a text file, but you should add a real icon.png (128x128 pixels recommended)
