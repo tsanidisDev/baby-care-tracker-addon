@@ -44,6 +44,7 @@ Before installing the Baby Care Tracker add-on, ensure you have:
    ```bash
    cd /addons/
    git clone https://github.com/tsanidisDev/baby-care-tracker-addon.git
+   # The add-on will be available as baby-care-tracker-addon/baby-care-tracker/
    ```
 
 3. **Restart Home Assistant**

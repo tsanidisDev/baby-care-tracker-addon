@@ -1,6 +1,6 @@
 # Baby Care Tracker Add-on
 
-A comprehensive Home Assistant add-on for tracking baby care activities including feeding, sleep, and diaper changes with device automation support.
+A comprehensive3. Add this repository URL: `https://github.com/tsanidisDev/baby-care-tracker-addon`Home Assistant add-on for tracking baby care activities including feeding, sleep, and diaper changes with device automation support.
 
 ## Features
 
@@ -233,9 +233,9 @@ docker logs addon_baby_care_tracker
 
 ## Support
 
-- **Documentation**: [Wiki](https://github.com/yourusername/baby-care-tracker-addon/wiki)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/baby-care-tracker-addon/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/baby-care-tracker-addon/discussions)
+- **Documentation**: [Wiki](https://github.com/tsanidisDev/baby-care-tracker-addon/wiki)
+- **Issues**: [GitHub Issues](https://github.com/tsanidisDev/baby-care-tracker-addon/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/tsanidisDev/baby-care-tracker-addon/discussions)
 - **Home Assistant Community**: [Community Forum](https://community.home-assistant.io/)
 
 ## License
