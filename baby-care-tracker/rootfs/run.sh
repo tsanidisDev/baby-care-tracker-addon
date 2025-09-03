@@ -35,4 +35,4 @@ bashio::log.info "Analytics Enabled: ${ENABLE_ANALYTICS}"
 
 # Start the application
 cd /app
-exec python -u main.py
+exec python3 -u main.py
