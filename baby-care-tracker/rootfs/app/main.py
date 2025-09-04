@@ -29,6 +29,7 @@ try:
     from flask import Flask, render_template, request, jsonify, send_file
     from flask_cors import CORS
     from flask_socketio import SocketIO, emit
+    import json
     print("Flask modules imported successfully")
 except ImportError as e:
     print(f"ERROR importing Flask modules: {e}")
@@ -57,7 +58,7 @@ CONFIG = load_config()
 print(f"Configuration loaded: {CONFIG}")
 
 # Application version
-APP_VERSION = "1.0.6"
+APP_VERSION = "1.0.8"
 print(f"Baby Care Tracker Add-on version: {APP_VERSION}")
 
 print("Setting up logging...")
@@ -74,6 +75,13 @@ app = Flask(__name__,
 app.config['SECRET_KEY'] = 'baby-care-tracker-secret-key'
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+
+# Add custom Jinja2 filters
+@app.template_filter('tojsonfilter')
+def to_json_filter(obj):
+    """Convert Python object to JSON for use in templates"""
+    return json.dumps(obj, default=str)
+
 print("Flask application initialized")
 
 # Global components
@@ -244,11 +252,20 @@ def analytics_page():
         
         logger.info("Analytics page data prepared successfully")
         
+        # Prepare chart data for frontend
+        chart_data = {
+            'feeding_stats': feeding_stats,
+            'sleep_stats': sleep_stats,
+            'diaper_stats': diaper_stats,
+            'growth_data': growth_data
+        }
+        
         return render_template('analytics.html',
                              feeding_stats=feeding_stats,
                              sleep_stats=sleep_stats,
                              diaper_stats=diaper_stats,
-                             growth_data=growth_data)
+                             growth_data=growth_data,
+                             chart_data=chart_data)
     except Exception as e:
         logger.error(f"Critical error loading analytics page: {e}", exc_info=True)
         return render_template('error.html', error=str(e)), 500

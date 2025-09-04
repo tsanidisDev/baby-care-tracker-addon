@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2025-09-04
+
+### Fixed
+- Analytics page template error "No filter named 'tojsonfilter'"
+- Missing chart_data variable passed to analytics template
+- Jinja2 template filter registration for JSON serialization
+
+### Added
+- Custom Jinja2 filter 'tojsonfilter' for converting Python objects to JSON in templates
+- Proper chart_data object passed to analytics template for frontend chart rendering
+- Enhanced JSON serialization with default string conversion for datetime objects
+
+### Changed
+- Analytics template now receives properly formatted chart data
+- Improved template error handling and data preparation
+- Version updated to 1.0.8
+
 ## [1.0.7] - 2025-09-04
 
 ### Fixed
