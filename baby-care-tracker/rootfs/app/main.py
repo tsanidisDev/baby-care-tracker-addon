@@ -320,6 +320,21 @@ def api_delete_device_mapping(mapping_id):
         logger.error(f"Error deleting device mapping: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/devices/discover', methods=['POST'])
+def api_discover_devices():
+    """Discover available devices"""
+    try:
+        devices = device_manager.discover_devices()
+        return jsonify({
+            'success': True, 
+            'device_count': len(devices),
+            'devices': devices
+        })
+        
+    except Exception as e:
+        logger.error(f"Error discovering devices: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/analytics/feeding')
 def api_feeding_analytics():
     """Get feeding analytics"""
@@ -347,7 +362,19 @@ def api_daily_stats():
     """Get current daily statistics"""
     try:
         daily_stats = analytics.get_daily_stats()
-        return jsonify({'success': True, 'data': daily_stats})
+        
+        # Add debug information
+        debug_info = {
+            'stats_calculation_time': datetime.now().isoformat(),
+            'has_data': bool(daily_stats),
+            'total_events_count': db.get_total_events_count()
+        }
+        
+        return jsonify({
+            'success': True, 
+            'data': daily_stats,
+            'debug': debug_info
+        })
         
     except Exception as e:
         logger.error(f"Error getting daily stats: {e}")

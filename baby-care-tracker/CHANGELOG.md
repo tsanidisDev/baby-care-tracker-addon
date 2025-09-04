@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2025-09-04
+
+### Fixed
+- JavaScript error "eventType.replace(...).title is not a function" when logging events
+- Missing /api/devices/discover endpoint causing device discovery failures
+- Dashboard stats not refreshing automatically on page load
+- Template refreshDashboard() function using page reload instead of API calls
+
+### Added
+- Manual refresh button in dashboard Quick Actions section
+- Automatic dashboard stats refresh on page load
+- Debug information in /api/daily-stats endpoint for troubleshooting
+- Missing device discovery API endpoint for MQTT device scanning
+
+### Changed
+- Improved event type display formatting with proper title case conversion
+- Dashboard refresh now uses API calls instead of full page reload
+- Enhanced error handling and logging for device discovery
+- Better user feedback for manual dashboard refresh operations
+
 ## [1.0.5] - 2025-09-04
 
 ### Fixed
