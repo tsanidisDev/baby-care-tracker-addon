@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2025-09-04
+
+### Fixed
+- Analytics page crashing due to missing error handling
+- Settings page failing to load with proper error isolation
+- Device page not showing devices due to unhandled exceptions
+- Critical startup failures not being properly logged
+
+### Added
+- Comprehensive error logging throughout application startup
+- Individual component initialization with graceful failure handling
+- Enhanced API endpoint error logging with stack traces
+- Detailed component availability checks in all page routes
+- Debug information in API responses for troubleshooting
+
+### Changed
+- Application continues to run even if individual components fail to initialize
+- All page routes now have fallback data when components are unavailable
+- Enhanced logging shows exactly which components succeed/fail during startup
+- API endpoints now check component availability before attempting operations
+- Better error isolation prevents single component failures from crashing entire app
+
+### Security
+- Added proper error message sanitization to prevent information leakage
+
 ## [1.0.6] - 2025-09-04
 
 ### Fixed

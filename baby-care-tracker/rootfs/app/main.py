@@ -57,7 +57,7 @@ CONFIG = load_config()
 print(f"Configuration loaded: {CONFIG}")
 
 # Application version
-APP_VERSION = "1.0.4"
+APP_VERSION = "1.0.6"
 print(f"Baby Care Tracker Add-on version: {APP_VERSION}")
 
 print("Setting up logging...")
@@ -91,33 +91,68 @@ def initialize_components():
         logger.info("Checking for database migrations...")
         print("Checking for database migrations...")
         db_path = CONFIG.get('database_path', '/data/baby_care.db')
-        run_migrations(db_path, APP_VERSION)
-        logger.info("Database migrations completed")
-        print("Database migrations completed")
+        try:
+            run_migrations(db_path, APP_VERSION)
+            logger.info("Database migrations completed")
+            print("Database migrations completed")
+        except Exception as e:
+            logger.error(f"Database migration failed: {e}", exc_info=True)
+            print(f"Database migration failed: {e}")
+            # Continue anyway
         
         # Initialize database
         logger.info("Initializing database...")
         print("Initializing database...")
-        db = Database(CONFIG)
-        logger.info("Database initialized successfully")
-        print("Database initialized successfully")
-        
-        # Initialize MQTT client
-        logger.info("Initializing MQTT client...")
-        mqtt_client = MQTTClient(CONFIG, on_device_event)
+        try:
+            db = Database(CONFIG)
+            logger.info("Database initialized successfully")
+            print("Database initialized successfully")
+        except Exception as e:
+            logger.error(f"Database initialization failed: {e}", exc_info=True)
+            print(f"Database initialization failed: {e}")
+            raise
         
         # Initialize analytics
         logger.info("Initializing analytics...")
-        analytics = Analytics(db)
-        
+        print("Initializing analytics...")
+        try:
+            analytics = Analytics(db)
+            logger.info("Analytics initialized successfully")
+            print("Analytics initialized successfully")
+        except Exception as e:
+            logger.error(f"Analytics initialization failed: {e}", exc_info=True)
+            print(f"Analytics initialization failed: {e}")
+            # Continue without analytics
+            
         # Initialize device manager
         logger.info("Initializing device manager...")
-        device_manager = DeviceManager(CONFIG)
+        print("Initializing device manager...")
+        try:
+            device_manager = DeviceManager(CONFIG)
+            logger.info("Device manager initialized successfully")
+            print("Device manager initialized successfully")
+        except Exception as e:
+            logger.error(f"Device manager initialization failed: {e}", exc_info=True)
+            print(f"Device manager initialization failed: {e}")
+            # Continue without device manager
         
-        logger.info("All components initialized successfully")
+        # Initialize MQTT client
+        logger.info("Initializing MQTT client...")
+        print("Initializing MQTT client...")
+        try:
+            mqtt_client = MQTTClient(CONFIG, on_device_event)
+            logger.info("MQTT client initialized successfully")
+            print("MQTT client initialized successfully")
+        except Exception as e:
+            logger.error(f"MQTT client initialization failed: {e}", exc_info=True)
+            print(f"MQTT client initialization failed: {e}")
+            # Continue without MQTT
+        
+        logger.info("Component initialization completed")
+        print("Component initialization completed")
         
     except Exception as e:
-        logger.error(f"Failed to initialize components: {e}")
+        logger.error(f"Critical failure during component initialization: {e}", exc_info=True)
         sys.exit(1)
 
 def on_device_event(device_id, event_type, data):
@@ -170,11 +205,44 @@ def dashboard():
 def analytics_page():
     """Analytics and reports page"""
     try:
-        # Get analytics data
-        feeding_stats = analytics.get_feeding_analytics()
-        sleep_stats = analytics.get_sleep_analytics()
-        diaper_stats = analytics.get_diaper_analytics()
-        growth_data = analytics.get_growth_trends()
+        logger.info("Loading analytics page...")
+        
+        # Initialize with empty data in case methods fail
+        feeding_stats = {}
+        sleep_stats = {}
+        diaper_stats = {}
+        growth_data = {}
+        
+        # Get analytics data with individual error handling
+        try:
+            feeding_stats = analytics.get_feeding_analytics() if analytics else {}
+            logger.info(f"Feeding stats loaded: {len(feeding_stats) if feeding_stats else 0} items")
+        except Exception as e:
+            logger.error(f"Error loading feeding analytics: {e}")
+            feeding_stats = {'error': str(e)}
+            
+        try:
+            sleep_stats = analytics.get_sleep_analytics() if analytics else {}
+            logger.info(f"Sleep stats loaded: {len(sleep_stats) if sleep_stats else 0} items")
+        except Exception as e:
+            logger.error(f"Error loading sleep analytics: {e}")
+            sleep_stats = {'error': str(e)}
+            
+        try:
+            diaper_stats = analytics.get_diaper_analytics() if analytics else {}
+            logger.info(f"Diaper stats loaded: {len(diaper_stats) if diaper_stats else 0} items")
+        except Exception as e:
+            logger.error(f"Error loading diaper analytics: {e}")
+            diaper_stats = {'error': str(e)}
+            
+        try:
+            growth_data = analytics.get_growth_trends() if analytics else {}
+            logger.info(f"Growth data loaded: {len(growth_data) if growth_data else 0} items")
+        except Exception as e:
+            logger.error(f"Error loading growth trends: {e}")
+            growth_data = {'error': str(e)}
+        
+        logger.info("Analytics page data prepared successfully")
         
         return render_template('analytics.html',
                              feeding_stats=feeding_stats,
@@ -182,58 +250,117 @@ def analytics_page():
                              diaper_stats=diaper_stats,
                              growth_data=growth_data)
     except Exception as e:
-        logger.error(f"Error loading analytics: {e}")
+        logger.error(f"Critical error loading analytics page: {e}", exc_info=True)
         return render_template('error.html', error=str(e)), 500
 
 @app.route('/devices')
 def devices_page():
     """Device configuration page"""
     try:
-        available_devices = device_manager.discover_devices()
-        current_mappings = device_manager.get_all_mappings()
+        logger.info("Loading devices page...")
+        
+        # Initialize with empty data
+        available_devices = []
+        current_mappings = []
         mqtt_config = {
-            'broker': CONFIG.get('mqtt_broker', 'core-mosquitto'),
-            'username': CONFIG.get('mqtt_username', ''),
-            'connected': mqtt_client.is_connected() if mqtt_client else False,
-            'status': 'Connected' if (mqtt_client and mqtt_client.is_connected()) else 'Disconnected'
+            'broker': 'core-mosquitto',
+            'username': '',
+            'connected': False,
+            'status': 'Disconnected'
         }
+        
+        try:
+            available_devices = device_manager.discover_devices() if device_manager else []
+            logger.info(f"Discovered {len(available_devices)} devices")
+        except Exception as e:
+            logger.error(f"Error discovering devices: {e}")
+            available_devices = []
+            
+        try:
+            current_mappings = device_manager.get_all_mappings() if device_manager else []
+            logger.info(f"Loaded {len(current_mappings)} device mappings")
+        except Exception as e:
+            logger.error(f"Error loading device mappings: {e}")
+            current_mappings = []
+            
+        try:
+            mqtt_config = {
+                'broker': CONFIG.get('mqtt_broker', 'core-mosquitto'),
+                'username': CONFIG.get('mqtt_username', ''),
+                'connected': mqtt_client.is_connected() if mqtt_client else False,
+                'status': 'Connected' if (mqtt_client and mqtt_client.is_connected()) else 'Disconnected'
+            }
+            logger.info(f"MQTT status: {mqtt_config['status']}")
+        except Exception as e:
+            logger.error(f"Error getting MQTT status: {e}")
+        
+        logger.info("Devices page data prepared successfully")
         
         return render_template('devices.html',
                              available_devices=available_devices,
                              current_mappings=current_mappings,
                              mqtt_config=mqtt_config)
     except Exception as e:
-        logger.error(f"Error loading devices page: {e}")
+        logger.error(f"Critical error loading devices page: {e}", exc_info=True)
         return render_template('error.html', error=str(e)), 500
 
 @app.route('/settings')
 def settings_page():
     """Settings and configuration page"""
     try:
-        current_config = CONFIG
+        logger.info("Loading settings page...")
+        
+        # Initialize with safe defaults
+        current_config = CONFIG if CONFIG else {}
         system_info = {
             'version': APP_VERSION,
-            'database_type': CONFIG.get('database_type', 'sqlite'),
-            'mqtt_connected': mqtt_client.is_connected() if mqtt_client else False,
-            'total_events': db.get_total_events_count() if db else 0
+            'database_type': 'sqlite',
+            'mqtt_connected': False,
+            'total_events': 0
+        }
+        settings = {
+            'mqtt_broker': 'core-mosquitto',
+            'mqtt_username': '',
+            'database_type': 'sqlite',
+            'log_level': 'info',
+            'analytics_enabled': True,
+            'export_enabled': True,
+            'timezone': 'UTC'
         }
         
-        settings = {
-            'mqtt_broker': CONFIG.get('mqtt_broker', 'core-mosquitto'),
-            'mqtt_username': CONFIG.get('mqtt_username', ''),
-            'database_type': CONFIG.get('database_type', 'sqlite'),
-            'log_level': CONFIG.get('log_level', 'info'),
-            'analytics_enabled': CONFIG.get('enable_analytics', True),
-            'export_enabled': CONFIG.get('export_enabled', True),
-            'timezone': CONFIG.get('timezone', 'UTC')
-        }
+        try:
+            system_info = {
+                'version': APP_VERSION,
+                'database_type': CONFIG.get('database_type', 'sqlite'),
+                'mqtt_connected': mqtt_client.is_connected() if mqtt_client else False,
+                'total_events': db.get_total_events_count() if db else 0
+            }
+            logger.info(f"System info loaded: {system_info}")
+        except Exception as e:
+            logger.error(f"Error loading system info: {e}")
+        
+        try:
+            settings = {
+                'mqtt_broker': CONFIG.get('mqtt_broker', 'core-mosquitto'),
+                'mqtt_username': CONFIG.get('mqtt_username', ''),
+                'database_type': CONFIG.get('database_type', 'sqlite'),
+                'log_level': CONFIG.get('log_level', 'info'),
+                'analytics_enabled': CONFIG.get('enable_analytics', True),
+                'export_enabled': CONFIG.get('export_enabled', True),
+                'timezone': CONFIG.get('timezone', 'UTC')
+            }
+            logger.info(f"Settings loaded: {list(settings.keys())}")
+        except Exception as e:
+            logger.error(f"Error loading settings: {e}")
+        
+        logger.info("Settings page data prepared successfully")
         
         return render_template('settings.html',
                              config=current_config,
                              system_info=system_info,
                              settings=settings)
     except Exception as e:
-        logger.error(f"Error loading settings: {e}")
+        logger.error(f"Critical error loading settings page: {e}", exc_info=True)
         return render_template('error.html', error=str(e)), 500
 
 # ============================================================================
@@ -259,7 +386,14 @@ def api_get_events():
 def api_add_event():
     """Add a new baby care event"""
     try:
+        logger.info("API: Adding new event...")
+        if not db:
+            logger.error("Database not initialized")
+            return jsonify({'success': False, 'error': 'Database not available'}), 500
+            
         data = request.get_json()
+        logger.info(f"API: Event data received: {data}")
+        
         event_id = db.add_event(
             event_type=data['type'],
             duration=data.get('duration'),
@@ -267,18 +401,24 @@ def api_add_event():
             device_source=data.get('device_source', 'manual')
         )
         
+        logger.info(f"API: Event added with ID: {event_id}")
+        
         # Emit real-time update
-        socketio.emit('new_event', {
-            'id': event_id,
-            'type': data['type'],
-            'timestamp': datetime.now().isoformat(),
-            'device': data.get('device_source', 'manual')
-        })
+        try:
+            socketio.emit('new_event', {
+                'id': event_id,
+                'type': data['type'],
+                'timestamp': datetime.now().isoformat(),
+                'device': data.get('device_source', 'manual')
+            })
+            logger.info("API: Real-time event emitted")
+        except Exception as e:
+            logger.error(f"Error emitting real-time event: {e}")
         
         return jsonify({'success': True, 'event_id': event_id})
         
     except Exception as e:
-        logger.error(f"Error adding event: {e}")
+        logger.error(f"Error adding event: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/device-mappings', methods=['GET'])
@@ -324,7 +464,14 @@ def api_delete_device_mapping(mapping_id):
 def api_discover_devices():
     """Discover available devices"""
     try:
+        logger.info("API: Discovering devices...")
+        if not device_manager:
+            logger.error("Device manager not initialized")
+            return jsonify({'success': False, 'error': 'Device manager not available'}), 500
+            
         devices = device_manager.discover_devices()
+        logger.info(f"API: Discovered {len(devices)} devices")
+        
         return jsonify({
             'success': True, 
             'device_count': len(devices),
@@ -332,7 +479,7 @@ def api_discover_devices():
         })
         
     except Exception as e:
-        logger.error(f"Error discovering devices: {e}")
+        logger.error(f"Error discovering devices: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/analytics/feeding')
@@ -361,14 +508,23 @@ def api_sleep_analytics():
 def api_daily_stats():
     """Get current daily statistics"""
     try:
+        logger.info("API: Getting daily stats...")
+        if not analytics:
+            logger.error("Analytics not initialized")
+            return jsonify({'success': False, 'error': 'Analytics not available'}), 500
+            
         daily_stats = analytics.get_daily_stats()
         
         # Add debug information
         debug_info = {
             'stats_calculation_time': datetime.now().isoformat(),
             'has_data': bool(daily_stats),
-            'total_events_count': db.get_total_events_count()
+            'total_events_count': db.get_total_events_count() if db else 0,
+            'analytics_available': analytics is not None,
+            'database_available': db is not None
         }
+        
+        logger.info(f"API: Daily stats retrieved: {debug_info}")
         
         return jsonify({
             'success': True, 
@@ -377,7 +533,7 @@ def api_daily_stats():
         })
         
     except Exception as e:
-        logger.error(f"Error getting daily stats: {e}")
+        logger.error(f"Error getting daily stats: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/export/<format>')
