@@ -58,7 +58,7 @@ CONFIG = load_config()
 print(f"Configuration loaded: {CONFIG}")
 
 # Application version
-APP_VERSION = "1.0.9"
+APP_VERSION = "1.0.10"
 print(f"Baby Care Tracker Add-on version: {APP_VERSION}")
 
 print("Setting up logging...")
@@ -259,17 +259,22 @@ def analytics_page():
                 'total_sessions': feeding_stats.get('total_feedings', 0) if feeding_stats else 0,
                 'left_breast_sessions': feeding_stats.get('left_breast_count', 0) if feeding_stats else 0,
                 'right_breast_sessions': feeding_stats.get('right_breast_count', 0) if feeding_stats else 0,
-                'daily_average': feeding_stats.get('daily_average', 0) if feeding_stats else 0
+                'daily_average': feeding_stats.get('daily_average', 0) if feeding_stats else 0,
+                'avg_duration_minutes': 0,  # Not available in current analytics
+                'avg_interval_hours': feeding_stats.get('average_interval_hours', 0) if feeding_stats else 0,
+                'sessions_per_day': feeding_stats.get('daily_average', 0) if feeding_stats else 0
             },
             'sleep_stats': {
                 'total_sessions': sleep_stats.get('total_sleep_sessions', 0) if sleep_stats else 0,
-                'average_duration': sleep_stats.get('average_duration_hours', 0) if sleep_stats else 0,
-                'total_hours': sleep_stats.get('total_sleep_hours', 0) if sleep_stats else 0
+                'avg_duration_hours': sleep_stats.get('average_session_duration', 0) if sleep_stats else 0,
+                'total_sleep_hours': sleep_stats.get('total_sleep_hours', 0) if sleep_stats else 0,
+                'daily_sleep_average': sleep_stats.get('daily_sleep_average', 0) if sleep_stats else 0
             },
             'diaper_stats': {
                 'total_changes': diaper_stats.get('total_changes', 0) if diaper_stats else 0,
-                'wet_changes': diaper_stats.get('wet_changes', 0) if diaper_stats else 0,
-                'dirty_changes': diaper_stats.get('dirty_changes', 0) if diaper_stats else 0
+                'wet_changes': diaper_stats.get('pee_count', 0) if diaper_stats else 0,
+                'dirty_changes': diaper_stats.get('poo_count', 0) if diaper_stats else 0,
+                'daily_average': diaper_stats.get('daily_average', 0) if diaper_stats else 0
             },
             'days_with_data': len(growth_data) if isinstance(growth_data, list) else 0
         }

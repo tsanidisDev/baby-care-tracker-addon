@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.10] - 2025-09-04
+
+### Fixed
+- Analytics template error with missing field 'avg_duration_hours' in sleep_stats
+- Corrected field name mapping from analytics methods to template expectations
+- Fixed diaper_stats field mapping: wet_changes → pee_count, dirty_changes → poo_count
+- Added missing feeding_stats fields: avg_duration_minutes, avg_interval_hours, sessions_per_day
+
+### Changed
+- Updated analytics summary object to match exact field names expected by template
+- Improved field mapping accuracy between backend analytics and frontend template
+- Added fallback values for fields not currently calculated by analytics methods
+- Enhanced template compatibility with analytics data structure
+
+### Technical
+- Fixed template field access errors by ensuring all referenced fields exist
+- Corrected analytics method output mapping to template variable expectations
+- Added proper null/zero handling for missing analytics calculations
+
 ## [1.0.9] - 2025-09-04
 
 ### Fixed
