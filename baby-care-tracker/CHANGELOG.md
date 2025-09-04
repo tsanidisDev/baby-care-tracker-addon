@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2025-09-04
+
+### Fixed
+- Analytics template error "'analytics' is undefined"
+- Missing analytics summary object with proper field structure
+- Template field name mismatch between analytics methods and template expectations
+- Analytics page template variable mapping for feeding, sleep, and diaper statistics
+
+### Added
+- Comprehensive analytics summary object with properly structured data
+- Field mapping between analytics method outputs and template requirements
+- Proper data structure for feeding_stats, sleep_stats, and diaper_stats in template
+- Enhanced error handling for analytics data transformation
+
+### Changed
+- Analytics template now receives properly structured analytics summary object
+- Improved data mapping from analytics methods to template variables
+- Better field name consistency between backend and frontend
+- Enhanced analytics data preparation with fallback values
+
 ## [1.0.8] - 2025-09-04
 
 ### Fixed

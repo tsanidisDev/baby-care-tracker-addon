@@ -58,7 +58,7 @@ CONFIG = load_config()
 print(f"Configuration loaded: {CONFIG}")
 
 # Application version
-APP_VERSION = "1.0.8"
+APP_VERSION = "1.0.9"
 print(f"Baby Care Tracker Add-on version: {APP_VERSION}")
 
 print("Setting up logging...")
@@ -252,6 +252,28 @@ def analytics_page():
         
         logger.info("Analytics page data prepared successfully")
         
+        # Prepare comprehensive analytics object with expected structure for template
+        analytics_summary = {
+            'total_events': db.get_total_events_count() if db else 0,
+            'feeding_stats': {
+                'total_sessions': feeding_stats.get('total_feedings', 0) if feeding_stats else 0,
+                'left_breast_sessions': feeding_stats.get('left_breast_count', 0) if feeding_stats else 0,
+                'right_breast_sessions': feeding_stats.get('right_breast_count', 0) if feeding_stats else 0,
+                'daily_average': feeding_stats.get('daily_average', 0) if feeding_stats else 0
+            },
+            'sleep_stats': {
+                'total_sessions': sleep_stats.get('total_sleep_sessions', 0) if sleep_stats else 0,
+                'average_duration': sleep_stats.get('average_duration_hours', 0) if sleep_stats else 0,
+                'total_hours': sleep_stats.get('total_sleep_hours', 0) if sleep_stats else 0
+            },
+            'diaper_stats': {
+                'total_changes': diaper_stats.get('total_changes', 0) if diaper_stats else 0,
+                'wet_changes': diaper_stats.get('wet_changes', 0) if diaper_stats else 0,
+                'dirty_changes': diaper_stats.get('dirty_changes', 0) if diaper_stats else 0
+            },
+            'days_with_data': len(growth_data) if isinstance(growth_data, list) else 0
+        }
+        
         # Prepare chart data for frontend
         chart_data = {
             'feeding_stats': feeding_stats,
@@ -265,6 +287,7 @@ def analytics_page():
                              sleep_stats=sleep_stats,
                              diaper_stats=diaper_stats,
                              growth_data=growth_data,
+                             analytics=analytics_summary,
                              chart_data=chart_data)
     except Exception as e:
         logger.error(f"Critical error loading analytics page: {e}", exc_info=True)
